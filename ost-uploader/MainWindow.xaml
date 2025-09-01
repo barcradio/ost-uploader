@@ -5,8 +5,58 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ost_uploader"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
-
-    </Grid>
+        Title="OST-Uploader" Height="400" Width="600">
+    <Window.Resources>
+        <Style x:Key="StandardButton" TargetType="Button">
+            <Setter Property="Background" Value="#FF007ACC"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+    </Window.Resources>
+    <StackPanel Orientation="Vertical">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center" Width="600" Margin="0,4,0,4">
+                <Label Content="Email:" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                <TextBox x:Name="userEmail_TextBox" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0" TextWrapping="Wrap" Width="120" Height="18" />
+                <Label Content="Password:" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                <PasswordBox x:Name="password_TextBox" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0" Width="120" Height="18" />
+                <Button x:Name="loginButton" Content="Login"
+                        Style="{StaticResource StandardButton}"
+                        Command="{Binding LoginCommand}"
+                        CommandParameter="{Binding ElementName=passwordBox}"
+                        HorizontalAlignment="Left" VerticalAlignment="Center"
+                        Click="authLogin_Click" />
+                <Label Name="authStatus_Label" Content="Not Authenticated" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="10,0,0,0" ToolTip=""/>
+            </StackPanel>
+            <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,4,0,4" >
+                <Label Content="Select CSV File:" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                <TextBox Name="fileName_textBox" HorizontalAlignment="Left" VerticalAlignment="Center" TextWrapping="Wrap" Text="" Margin="10,0,0,0" Width="240"/>
+                <Button Name="browse_Button" Style="{StaticResource StandardButton}" Content="Load File" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0" Click="browse_Button_Click"/>
+            </StackPanel>
+            <Button Name="upload_Button" Grid.Row="1" Style="{StaticResource StandardButton}" Content="Upload Data" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="10,0,10,0" Click="upload_Button_Click"/>
+        </Grid>
+        <Rectangle Fill="#FF007ACC" Height="2"/>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="36"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,0">
+                <TextBox Name="event_textBox" HorizontalAlignment="Left" VerticalAlignment="Center" TextWrapping="Wrap" Text="" Margin="10,0,0,0" Width="120"/>
+                <TextBox Name="station_textBox" HorizontalAlignment="Left" VerticalAlignment="Center" TextWrapping="Wrap" Text="" Margin="10,0,0,0" Width="120"/>
+                <TextBox Name="exportType_textBox" HorizontalAlignment="Left" VerticalAlignment="Center" TextWrapping="Wrap" Text="" Margin="10,0,0,0" Width="120"/>
+                <Label Name="recordsLoaded_Label" Content="Records Loaded: 0" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0"/>
+            </StackPanel>
+            <DataGrid x:Name="csvDataGrid" Grid.Row="1" d:ItemsSource="{d:SampleData ItemCount=5}" Height="280" VerticalAlignment="Top"/>
+        </Grid>
+    </StackPanel>
 </Window>

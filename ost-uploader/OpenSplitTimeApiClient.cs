@@ -1,8 +1,10 @@
 using System;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace ost_uploader
 {
@@ -36,11 +38,37 @@ namespace ost_uploader
         /// <returns>Response string from the API</returns>
         public async Task<string> PostJsonAsync(string endpoint, string jsonPayload)
         {
-            var url = $"{_baseUrl}{endpoint}";
-            var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
-            var response = await _httpClient.PostAsync(url, content);
-            response.EnsureSuccessStatusCode();
-            return await response.Content.ReadAsStringAsync();
+            try
+            {
+                var url = $"{_baseUrl}{endpoint}";
+                var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+                var response = await _httpClient.PostAsync(url, content);
+                response.EnsureSuccessStatusCode();
+                return await response.Content.ReadAsStringAsync();
+            }
+            catch (HttpRequestException ex)
+            {
+                if (ex.StatusCode.HasValue)
+                {
+                    if (ex.StatusCode == (HttpStatusCode)422)
+                    {
+                        // record is duplicate?
+                    }
+                    MessageBox.Show($"HTTP Error {(int)ex.StatusCode.Value}: {ex.Message}");
+                }
+                else
+                {
+                    // Handle HTTP request errors
+                    MessageBox.Show($"Request error: {ex.Message}");
+                }
+                throw;
+            }
+            catch (Exception ex)
+            {
+                // Handle other potential errors
+                MessageBox.Show($"Unexpected error: {ex.Message}");
+                throw;
+            }
         }
 
         /// </summary>
@@ -49,10 +77,25 @@ namespace ost_uploader
         /// <returns>Response string from the API</returns>
         public async Task<string> PostAsync(string endpoint, HttpContent content)
         {
-            var url = $"{_baseUrl}{endpoint}";
-            var response = await _httpClient.PostAsync(url, content);
-            response.EnsureSuccessStatusCode();
-            return await response.Content.ReadAsStringAsync();
+            try
+            {
+                var url = $"{_baseUrl}{endpoint}";
+                var response = await _httpClient.PostAsync(url, content);
+                response.EnsureSuccessStatusCode();
+                return await response.Content.ReadAsStringAsync();
+            }
+            catch (HttpRequestException ex)
+            {
+                // Handle HTTP request errors
+                MessageBox.Show($"Request error: {ex.Message}");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                // Handle other potential errors
+                MessageBox.Show($"Unexpected error: {ex.Message}");
+                throw;
+            }
         }
 
         /// <summary>
@@ -63,10 +106,25 @@ namespace ost_uploader
         /// <returns>Response string from the API</returns>
         public async Task<string> GetAsync(string endpoint)
         {
-            var url = $"{_baseUrl}{endpoint}";
-            var response = await _httpClient.GetAsync(url);
-            response.EnsureSuccessStatusCode();
-            return await response.Content.ReadAsStringAsync();
+            try
+            {
+                var url = $"{_baseUrl}{endpoint}";
+                var response = await _httpClient.GetAsync(url);
+                response.EnsureSuccessStatusCode();
+                return await response.Content.ReadAsStringAsync();
+            }
+            catch (HttpRequestException ex)
+            {
+                // Handle HTTP request errors
+                MessageBox.Show($"Request error: {ex.Message}");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                // Handle other potential errors
+                MessageBox.Show($"Unexpected error: {ex.Message}");
+                throw;
+            }
         }
     }
 }

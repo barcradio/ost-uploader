@@ -1,9 +1,12 @@
 using System;
+using System.Net;
 using System.Net.Http;
+using System.Security;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace ost_uploader
 {
@@ -27,28 +30,51 @@ namespace ost_uploader
 
         /// Sign in using basic username and password.
         /// </summary>
-        public async Task<APIAuthResponse> SignInBasicAsync(string email, string password)
+        public async Task<APIAuthResponse> SignInBasicAsync(string email, SecureString password)
         {
-            var payload = new UserAuthRequest
+            try
             {
-                User = new UserAuthRequest.UserCredentials
+                var payload = new UserAuthRequest
                 {
-                    Email = email,
-                    Password = password
+                    User = new UserAuthRequest.UserCredentials
+                    {
+                        Email = email,
+                        Password = new NetworkCredential("", password).Password
+                    }
+                };
+
+                var jsonPayload = JsonSerializer.Serialize(payload);
+                var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+
+                var task = _httpClient.PostAsync("https://www.opensplittime.org/api/v1/auth", content);
+                var response = task.GetAwaiter().GetResult();
+
+                response.EnsureSuccessStatusCode();
+                var responseContent = await response.Content.ReadAsStringAsync();
+
+                jsonPayload = null;
+                content = null;
+
+                AuthResponse = JsonSerializer.Deserialize<APIAuthResponse>(responseContent) ?? new APIAuthResponse();
+                return _authResponse;
+            }
+            catch (HttpRequestException ex)
+            {
+                if (ex.StatusCode.HasValue)
+                    MessageBox.Show($"HTTP Error {(int)ex.StatusCode.Value}: {ex.Message}");
+                else
+                {
+                    // Handle HTTP request errors
+                    MessageBox.Show($"Request error: {ex.Message}");
                 }
-            };
-
-            var jsonPayload = JsonSerializer.Serialize(payload);
-            var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
-            
-            var task = _httpClient.PostAsync("https://www.opensplittime.org/api/v1/auth", content);
-            var response = task.GetAwaiter().GetResult();
-
-            response.EnsureSuccessStatusCode();
-            var responseContent = await response.Content.ReadAsStringAsync();
-
-            AuthResponse = JsonSerializer.Deserialize<APIAuthResponse>(responseContent) ?? new APIAuthResponse();
-            return _authResponse;
+                return new APIAuthResponse();
+            }
+            catch (Exception ex)
+            {
+                // Handle other potential errors
+                MessageBox.Show($"Unexpected error: {ex.Message}");
+                return new APIAuthResponse();
+            }
         }
     }
 

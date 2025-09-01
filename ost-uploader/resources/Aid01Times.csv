@@ -1,0 +1,6 @@
+bear-100-2025,1-logan-peak,incremental-export
+index,sent,bibId,timeIn,timeOut,dnfType,dnfStation,note
+1,1,1,07:00:00 01 Sep 2025,07:01:10 01 Sep 2025,,,
+2,1,2,07:01:10 01 Sep 2025,07:02:20 01 Sep 2025,,,
+3,1,6,07:02:15 01 Sep 2025,07:03:30 01 Sep 2025,withdrew,,
+4,1,7,07:03:20 01 Sep 2025,07:04:40 01 Sep 2025,,,

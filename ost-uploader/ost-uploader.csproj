@@ -7,10 +7,11 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <ApplicationIcon>resources\ost-icon.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="resources\" />
+    <EmbeddedResource Include="resources\ost-icon.ico" />
   </ItemGroup>
 
   <ItemGroup>
