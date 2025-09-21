@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ost_uploader"
         mc:Ignorable="d"
-        Title="OST-Uploader" Height="400" Width="600">
+        Title="OST-Uploader" Width="600" SizeToContent="WidthAndHeight">
     <Window.Resources>
         <Style x:Key="StandardButton" TargetType="Button">
             <Setter Property="Background" Value="#FF007ACC"/>
@@ -26,9 +26,9 @@
             </Grid.RowDefinitions>
             <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center" Width="600" Margin="0,4,0,4">
                 <Label Content="Email:" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0"/>
-                <TextBox x:Name="userEmail_TextBox" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0" TextWrapping="Wrap" Width="120" Height="18" />
-                <Label Content="Password:" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0"/>
-                <PasswordBox x:Name="password_TextBox" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0" Width="120" Height="18" />
+                <TextBox x:Name="userEmail_TextBox" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0" TextWrapping="Wrap" Width="120" Height="18" TextChanged="userEmail_TextBox_TextChanged"/>
+                <Label Content="Password:" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0" />
+                <PasswordBox x:Name="password_TextBox" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0" Width="120" Height="18" PasswordChanged="password_TextBox_PasswordChanged"/>
                 <Button x:Name="loginButton" Content="Login"
                         Style="{StaticResource StandardButton}"
                         Command="{Binding LoginCommand}"
@@ -58,5 +58,12 @@
             </StackPanel>
             <DataGrid x:Name="csvDataGrid" Grid.Row="1" d:ItemsSource="{d:SampleData ItemCount=5}" Height="280" VerticalAlignment="Top"/>
         </Grid>
+        <StatusBar Name="statusBar" Height="30" VerticalAlignment="Bottom" >
+            <Label x:Name="event_Label" Content="OST Event"/>
+            <TextBox x:Name="ostEvent_TextBox" TextWrapping="Wrap" Text="{Binding OSTEventName, UpdateSourceTrigger=PropertyChanged}" Width="150" IsEnabled="False"/>
+            <Separator Height="30" HorizontalAlignment="Left" VerticalAlignment="Center" Width="1"/>
+            <Label x:Name="status_Label" Content="Status"/>
+            <TextBox x:Name="status_TextBox" TextWrapping="Wrap" Text="{Binding StatusMessage, UpdateSourceTrigger=PropertyChanged}" Width="320" IsEnabled="False"/>
+        </StatusBar>
     </StackPanel>
 </Window>
