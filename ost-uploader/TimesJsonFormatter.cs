@@ -23,8 +23,7 @@ namespace ost_uploader
 
             foreach (var entry in entries)
             {
-                if(entry.DnfType == "withdrew" || entry.DnfType == "medical" || entry.DnfType == "timeout")
-                    isDNF = true;
+                isDNF = (entry.DnfType == "withdrew" || entry.DnfType == "medical" || entry.DnfType == "timeout");
 
                 if (entry.TimeIn.HasValue)
                 {

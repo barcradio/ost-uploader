@@ -1,9 +1,11 @@
 ﻿using System.IO;
 using System.Security;
+using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using Path = System.IO.Path;
+using ost_uploader.ViewModels;
 
 namespace ost_uploader
 {
@@ -12,7 +14,7 @@ namespace ost_uploader
     /// </summary>
     public partial class MainWindow : Window
     {
-        const string AppVersion = "1.0.0";
+        const string AppVersion = "1.0.2";
         const string AppName = "OST Uploader";
         const string AppAuthor = "Bridgerland Amateur Radio Club";
         const string AppCopyright = "2025 Bridgerland Amateur Radio Club";
@@ -22,12 +24,19 @@ namespace ost_uploader
         const string AppIcon = "pack://application:,,,/ost-uploader;component/Resources/ost_icon.ico";
 
         const string ApiBaseUrl = "https://www.opensplittime.org";
-        const int TEST_EVENT_ID = 833;
+        const int TEST_EVENT_ID = 1015;
+        const int TEST_EVENT_GROUP = 833;
         const int BEAR1002025_EVENT_ID = 995;
-        private int _targetEventId = TEST_EVENT_ID;
+        const int BEAR1002025_EVENT_GROUP = 822;
+        private int _targetEventId = BEAR1002025_EVENT_ID;
+        private int _targetEventGroup = BEAR1002025_EVENT_GROUP;
+        private string _eventName = string.Empty;
+        private string _statusMessage = string.Empty;
 
         private APIAuthResponse? _authResponse;
         public event EventHandler? TimesLoaded;
+
+        StatusBarViewModel _statusBarViewModel;
 
         private bool _isAuthenticated = false;
         private string _loadedFilePath = string.Empty;
@@ -38,13 +47,20 @@ namespace ost_uploader
         public MainWindow()
         {
             InitializeComponent();
-            this.Show();
+            this.DataContext = 
+                
+            _statusBarViewModel = new StatusBarViewModel();
 
             event_textBox.IsEnabled = false;
             station_textBox.IsEnabled = false;
             exportType_textBox.IsEnabled = false;
             csvDataGrid.IsReadOnly = true;
 
+            recordsLoaded_Label.Content = "Records Loaded: 0";
+            _statusBarViewModel.StatusMessage = $"Waiting for authentication";
+            _statusBarViewModel.OSTEventName = $"Event: {_targetEventId}";
+
+            this.Show();
         }
 
         private async Task AuthenticateAsync(string userEmail, SecureString password)
@@ -60,6 +76,32 @@ namespace ost_uploader
             _authResponse = authProvider.AuthResponse;
 
             _isAuthenticated = !string.IsNullOrWhiteSpace(_authResponse.token);
+            if (_isAuthenticated)
+            {
+                await GetEventNameAsync(_targetEventId);
+                _statusBarViewModel.StatusMessage = $"Ready";
+            }
+        }
+
+        private async Task GetEventNameAsync(int eventId)
+        {
+            if (_authResponse == null || string.IsNullOrWhiteSpace(_authResponse.token))
+            {
+                MessageBox.Show("Authentication token is missing. Please authenticate first.");
+                return;
+            }
+            try
+            {
+                var apiClient = new OpenSplitTimeApiClient(ApiBaseUrl, _authResponse.token);
+                var response = await apiClient.GetAsync($"/api/v1/events/{eventId}");
+                OSTEvent targetEvent = JsonSerializer.Deserialize<OSTEvent>(response);
+                _statusBarViewModel.OSTEventName = targetEvent.data.attributes.name;
+                //MessageBox.Show($"Event Info: {response}");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error retrieving event info: {ex.Message}");
+            }
         }
 
         private static bool LoadTimes(string filePath, out string json)
@@ -79,7 +121,7 @@ namespace ost_uploader
                 return false;
             }
 
-            if(header.Fields.Count != 3)
+            if (header.Fields.Count != 3)
             {
                 MessageBox.Show("CSV header does not contain expected fields. \nEnsure file is an UltraTracker export file.");
                 return false;
@@ -112,25 +154,35 @@ namespace ost_uploader
 
         private async void UploadToOSTAsync()
         {
-            if (_authResponse == null || string.IsNullOrWhiteSpace(_authResponse.token))
+            try
             {
-                MessageBox.Show("Authentication token is missing. Please authenticate first.");
-                return;
-            }
+                if (_authResponse == null || string.IsNullOrWhiteSpace(_authResponse.token))
+                {
+                    MessageBox.Show("Authentication token is missing. Please authenticate first.");
+                    return;
+                }
 
-            if (string.IsNullOrWhiteSpace(_json))
+                if (string.IsNullOrWhiteSpace(_json))
+                {
+                    MessageBox.Show("JSON data is missing. Please load times from a CSV file first.");
+                    return;
+                }
+
+                File.WriteAllText("output.json", _json);
+
+                var apiClient = new OpenSplitTimeApiClient(ApiBaseUrl, _authResponse.token);
+                var response = await apiClient.PostJsonAsync("/api/v1/event_groups/" + _targetEventGroup + "/import", _json);
+
+                string fileName = Path.GetFileName(_loadedFilePath);
+                _statusBarViewModel.StatusMessage = $"Upload completed: {fileName}";
+
+                if (response != "{}")  //expect a quiet response when importing raw times
+                    MessageBox.Show($"API Response: {response}");
+            }
+            catch (Exception ex)
             {
-                MessageBox.Show("JSON data is missing. Please load times from a CSV file first.");
-                return;
+                _statusBarViewModel.StatusMessage = $"Upload error: {ex.Message}";
             }
-
-            File.WriteAllText("output.json", _json);
-
-            var apiClient = new OpenSplitTimeApiClient(ApiBaseUrl, _authResponse.token);
-            var response = await apiClient.PostJsonAsync("/api/v1/event_groups/" + _targetEventId + "/import", _json);
-
-            if (response != "{}")  //expect a quiet response when importing raw times
-                MessageBox.Show($"API Response: {response}");
         }
 
         private async void authLogin_Click(object sender, RoutedEventArgs e)
@@ -192,11 +244,11 @@ namespace ost_uploader
 
                 if (!LoadTimes(_loadedFilePath, out _json))
                     return;
-                
+
                 _hasLoadedTimes = true;
-                
+
                 fileName_textBox.Text = _loadedFilePath;
-                //MessageBox.Show($"Selected file: {_loadedFilePath}");
+                _statusBarViewModel.StatusMessage = $"Ready for Upload: {Path.GetFileName(_loadedFilePath)}";
             }
         }
 
@@ -216,5 +268,16 @@ namespace ost_uploader
 
             UploadToOSTAsync();
         }
+
+        private void password_TextBox_PasswordChanged(object sender, RoutedEventArgs e)
+        {
+            loginButton.IsEnabled = true;
+        }
+
+        private void userEmail_TextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            loginButton.IsEnabled = true;
+        }
     }
 }
+

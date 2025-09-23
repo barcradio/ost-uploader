@@ -16,7 +16,7 @@
 
   <ItemGroup>
     <None Update="resources\Aid05Times.csv">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 
