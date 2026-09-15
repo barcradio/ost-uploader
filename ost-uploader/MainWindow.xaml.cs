@@ -1,4 +1,6 @@
 ﻿using System.IO;
+using System.Collections.Generic;
+using System.Linq;
 using System.Security;
 using System.Text.Json;
 using System.Windows;
@@ -42,6 +44,8 @@ namespace ost_uploader
         private string _loadedFilePath = string.Empty;
         private bool _hasLoadedTimes = false;
         private string? _json = null;
+        private Dictionary<string, HashSet<string>> _splitEntryKindsBySplit =
+            new Dictionary<string, HashSet<string>>(System.StringComparer.OrdinalIgnoreCase);
 
 
         public MainWindow()
@@ -79,6 +83,7 @@ namespace ost_uploader
             if (_isAuthenticated)
             {
                 await GetEventNameAsync(_targetEventId);
+                await SyncSplitEntryKindsAsync();
                 _statusBarViewModel.StatusMessage = $"Ready";
             }
         }
@@ -94,8 +99,12 @@ namespace ost_uploader
             {
                 var apiClient = new OpenSplitTimeApiClient(ApiBaseUrl, _authResponse.token);
                 var response = await apiClient.GetAsync($"/api/v1/events/{eventId}");
-                OSTEvent targetEvent = JsonSerializer.Deserialize<OSTEvent>(response);
-                _statusBarViewModel.OSTEventName = targetEvent.data.attributes.name;
+                var targetEvent = JsonSerializer.Deserialize<OSTEvent>(response);
+
+                if (!string.IsNullOrWhiteSpace(targetEvent?.data?.attributes?.name))
+                {
+                    _statusBarViewModel.OSTEventName = targetEvent.data.attributes.name;
+                }
                 //MessageBox.Show($"Event Info: {response}");
             }
             catch (Exception ex)
@@ -104,7 +113,95 @@ namespace ost_uploader
             }
         }
 
-        private static bool LoadTimes(string filePath, out string json)
+        private async Task SyncSplitEntryKindsAsync()
+        {
+            if (_authResponse == null || string.IsNullOrWhiteSpace(_authResponse.token))
+            {
+                return;
+            }
+
+            try
+            {
+                var apiClient = new OpenSplitTimeApiClient(ApiBaseUrl, _authResponse.token);
+                var response = await apiClient.GetAsync($"/api/v1/event_groups/{_targetEventGroup}");
+                var eventGroup = JsonSerializer.Deserialize<OSTEventGroup>(response);
+                _splitEntryKindsBySplit = BuildSplitEntryKindsLookup(eventGroup);
+            }
+            catch
+            {
+                _splitEntryKindsBySplit = new Dictionary<string, HashSet<string>>(System.StringComparer.OrdinalIgnoreCase);
+            }
+        }
+
+        private static Dictionary<string, HashSet<string>> BuildSplitEntryKindsLookup(OSTEventGroup? eventGroup)
+        {
+            var splitEntryKinds = new Dictionary<string, HashSet<string>>(System.StringComparer.OrdinalIgnoreCase);
+            var attributes = eventGroup?.data?.attributes;
+            var allGroups = new List<DataEntryGroup>();
+
+            if (attributes?.dataEntryGroups != null)
+            {
+                allGroups.AddRange(attributes.dataEntryGroups);
+            }
+
+            if (attributes?.unpairedDataEntryGroups != null)
+            {
+                allGroups.AddRange(attributes.unpairedDataEntryGroups);
+            }
+
+            foreach (var group in allGroups)
+            {
+                if (group?.entries == null)
+                {
+                    continue;
+                }
+
+                foreach (var entry in group.entries)
+                {
+                    if (string.IsNullOrWhiteSpace(entry?.splitName) || string.IsNullOrWhiteSpace(entry.subSplitKind))
+                    {
+                        continue;
+                    }
+
+                    foreach (var kind in NormalizeSplitKinds(entry.subSplitKind))
+                    {
+                        if (!splitEntryKinds.TryGetValue(entry.splitName, out var kinds))
+                        {
+                            kinds = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase);
+                            splitEntryKinds[entry.splitName] = kinds;
+                        }
+
+                        kinds.Add(kind);
+                    }
+                }
+            }
+
+            return splitEntryKinds;
+        }
+
+        private static IEnumerable<string> NormalizeSplitKinds(string rawKind)
+        {
+            var normalized = rawKind.Trim().ToLowerInvariant();
+            return normalized switch
+            {
+                "in" => new[] { "in" },
+                "out" => new[] { "out" },
+                "inout" => new[] { "in", "out" },
+                _ => System.Array.Empty<string>()
+            };
+        }
+
+        private IEnumerable<string> ResolveAllowedKindsForSplit(string splitName)
+        {
+            if (_splitEntryKindsBySplit.TryGetValue(splitName, out var allowedKinds) && allowedKinds.Count > 0)
+            {
+                return allowedKinds;
+            }
+
+            return new[] { "in", "out" };
+        }
+
+        private bool LoadTimes(string filePath, out string json)
         {
             json = null;
             var importer = new TimesImporter();
@@ -140,8 +237,15 @@ namespace ost_uploader
             }
 
             var fileName = Path.GetFileNameWithoutExtension(filePath);
+            if (!stationNameMap.StationSplitMap.TryGetValue(station, out var splitName))
+            {
+                MessageBox.Show($"Unsupported station \"{station}\" in CSV header.");
+                return false;
+            }
 
-            var formatter = new TimesJsonFormatter(AppName + "_" + fileName, stationNameMap.StationSplitMap[station]);
+            var allowedKinds = ResolveAllowedKindsForSplit(splitName);
+
+            var formatter = new TimesJsonFormatter(AppName + "_" + fileName, splitName, allowedKinds);
             json = formatter.Format(entries);
 
             MainWindow? instance = Application.Current.Windows.OfType<MainWindow>().FirstOrDefault();
@@ -280,4 +384,3 @@ namespace ost_uploader
         }
     }
 }
-

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -9,11 +10,21 @@ namespace ost_uploader
     {
         private readonly string _source;
         private readonly string _splitName;
+        private readonly HashSet<string> _allowedKinds;
 
-        public TimesJsonFormatter(string source, string splitName)
+        public TimesJsonFormatter(string source, string splitName, IEnumerable<string>? allowedKinds = null)
         {
             _source = source;
             _splitName = splitName;
+            _allowedKinds = new HashSet<string>(
+                (allowedKinds ?? new[] { "in", "out" })
+                .Where(kind => !string.IsNullOrWhiteSpace(kind))
+                .Select(kind => kind.Trim().ToLowerInvariant()));
+
+            if (_allowedKinds.Count == 0)
+            {
+                _allowedKinds.UnionWith(new[] { "in", "out" });
+            }
         }
 
         public string Format(List<TimeEntry> entries)
@@ -25,7 +36,7 @@ namespace ost_uploader
             {
                 isDNF = (entry.DnfType == "withdrew" || entry.DnfType == "medical" || entry.DnfType == "timeout");
 
-                if (entry.TimeIn.HasValue)
+                if (entry.TimeIn.HasValue && _allowedKinds.Contains("in"))
                 {
                     data.Add(new JsonApiRawTime
                     {
@@ -42,7 +53,7 @@ namespace ost_uploader
                         }
                     });
                 }
-                if (entry.TimeOut.HasValue)
+                if (entry.TimeOut.HasValue && _allowedKinds.Contains("out"))
                 {
                     data.Add(new JsonApiRawTime
                     {
