@@ -163,14 +163,14 @@ namespace ost_uploader
                         continue;
                     }
 
+                    if (!splitEntryKinds.TryGetValue(entry.splitName, out var kinds))
+                    {
+                        kinds = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase);
+                        splitEntryKinds[entry.splitName] = kinds;
+                    }
+
                     foreach (var kind in NormalizeSplitKinds(entry.subSplitKind))
                     {
-                        if (!splitEntryKinds.TryGetValue(entry.splitName, out var kinds))
-                        {
-                            kinds = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase);
-                            splitEntryKinds[entry.splitName] = kinds;
-                        }
-
                         kinds.Add(kind);
                     }
                 }
@@ -193,7 +193,7 @@ namespace ost_uploader
 
         private IEnumerable<string> ResolveAllowedKindsForSplit(string splitName)
         {
-            if (_splitEntryKindsBySplit.TryGetValue(splitName, out var allowedKinds) && allowedKinds.Count > 0)
+            if (_splitEntryKindsBySplit.TryGetValue(splitName, out var allowedKinds))
             {
                 return allowedKinds;
             }
