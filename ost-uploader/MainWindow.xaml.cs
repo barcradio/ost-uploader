@@ -46,6 +46,7 @@ namespace ost_uploader
         private string? _json = null;
         private Dictionary<string, HashSet<string>> _splitEntryKindsBySplit =
             new Dictionary<string, HashSet<string>>(System.StringComparer.OrdinalIgnoreCase);
+        private string? _splitKindSyncStatusMessage;
 
 
         public MainWindow()
@@ -84,7 +85,7 @@ namespace ost_uploader
             {
                 await GetEventNameAsync(_targetEventId);
                 await SyncSplitEntryKindsAsync();
-                _statusBarViewModel.StatusMessage = $"Ready";
+                _statusBarViewModel.StatusMessage = _splitKindSyncStatusMessage ?? "Ready";
             }
         }
 
@@ -104,6 +105,11 @@ namespace ost_uploader
                 if (!string.IsNullOrWhiteSpace(targetEvent?.data?.attributes?.name))
                 {
                     _statusBarViewModel.OSTEventName = targetEvent.data.attributes.name;
+                }
+
+                if (int.TryParse(targetEvent?.data?.relationships?.eventGroup?.data?.id, out var eventGroupId))
+                {
+                    _targetEventGroup = eventGroupId;
                 }
                 //MessageBox.Show($"Event Info: {response}");
             }
@@ -126,10 +132,13 @@ namespace ost_uploader
                 var response = await apiClient.GetAsync($"/api/v1/event_groups/{_targetEventGroup}");
                 var eventGroup = JsonSerializer.Deserialize<OSTEventGroup>(response);
                 _splitEntryKindsBySplit = BuildSplitEntryKindsLookup(eventGroup);
+                _splitKindSyncStatusMessage = null;
             }
-            catch
+            catch (Exception ex)
             {
                 _splitEntryKindsBySplit = new Dictionary<string, HashSet<string>>(System.StringComparer.OrdinalIgnoreCase);
+                _splitKindSyncStatusMessage =
+                    $"Ready (OpenSplitTime split-kind sync unavailable: {ex.Message})";
             }
         }
 
