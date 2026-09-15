@@ -126,6 +126,13 @@ namespace ost_uploader
                 return;
             }
 
+            if (_targetEventGroup <= 0)
+            {
+                _splitEntryKindsBySplit = new Dictionary<string, HashSet<string>>(System.StringComparer.OrdinalIgnoreCase);
+                _splitKindSyncStatusMessage = "Ready (OpenSplitTime split-kind sync unavailable: event group not found)";
+                return;
+            }
+
             try
             {
                 var apiClient = new OpenSplitTimeApiClient(ApiBaseUrl, _authResponse.token);
