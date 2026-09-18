@@ -79,10 +79,9 @@ namespace ost_uploader
 
         private static string FormatDateTime(DateTime dt)
         {
-            // Example: "2023-08-09 09:16:01-6:00"
-            var offset = TimeZoneInfo.Local.GetUtcOffset(dt);
-            var offsetStr = $"{(offset.Hours >= 0 ? "+" : "-")}{Math.Abs(offset.Hours)}:00";
-            return dt.ToString("yyyy-MM-dd HH:mm:ss") + offsetStr;
+            // Required shape: "YYYY-MM-DD HH:MM:SS±HH:MM"
+            var dto = new DateTimeOffset(dt, TimeZoneInfo.Local.GetUtcOffset(dt));
+            return dto.ToString("yyyy-MM-dd HH:mm:sszzz");
         }
 
         private class JsonApiRoot
