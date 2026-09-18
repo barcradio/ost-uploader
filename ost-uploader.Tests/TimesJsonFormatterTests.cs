@@ -74,6 +74,22 @@ public class TimesJsonFormatterTests
     }
 
     [Fact]
+    public void Format_ExcludesDidNotStartEntries()
+    {
+        var entries = new List<TimeEntry>
+        {
+            new() { BibId = "101", TimeIn = new DateTime(2026, 1, 1, 8, 0, 0), DropType = "did-not-start" },
+            new() { BibId = "102", TimeIn = new DateTime(2026, 1, 1, 8, 5, 0) }
+        };
+
+        var json = new TimesJsonFormatter("aid-1", "Start").Format(entries);
+        var data = ParseData(json).EnumerateArray().ToList();
+
+        var record = Assert.Single(data);
+        Assert.Equal("102", record.GetProperty("attributes").GetProperty("bib_number").GetString());
+    }
+
+    [Fact]
     public void Format_AllowedKindsFilterRecords()
     {
         var entries = new List<TimeEntry>

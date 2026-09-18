@@ -98,5 +98,7 @@ namespace ost_uploader
 
         public static bool IsDuplicateBib(string bibId) =>
             !string.IsNullOrWhiteSpace(bibId) && DuplicateBibPattern.IsMatch(bibId);
+        public bool IsDidNotStart => string.Equals(DropType?.Trim(), "did-not-start", StringComparison.OrdinalIgnoreCase);
+        public string? DidNotStartNote => IsDidNotStart ? "Did not start - will not be uploaded to OST." : null;
     }
 }
