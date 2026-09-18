@@ -18,7 +18,6 @@ namespace ost_uploader
     /// </summary>
     public partial class MainWindow : Window
     {
-        const string AppVersion = "1.0.2";
         const string AppName = "OST Uploader";
         const string AppAuthor = "Bridgerland Amateur Radio Club";
         const string AppCopyright = "2025 Bridgerland Amateur Radio Club";
