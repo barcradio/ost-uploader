@@ -41,14 +41,27 @@ namespace ost_uploader
         {
             SplitNames = _splitNames;
             StationNames = _stationNames;
-            StationSplitMap = new Dictionary<string, string>();
+        StationSplitMap = new Dictionary<string, string>();
 
-            // Use index to map corresponding split and station names
-            for (int i = 0; i < StationNames.Count && i < SplitNames.Count; i++)
-            {
-                StationSplitMap.Add(StationNames[i], SplitNames[i]);
-            }
+        // Use index to map corresponding split and station names
+        for (int i = 0; i < StationNames.Count && i < SplitNames.Count; i++)
+        {
+            StationSplitMap.Add(StationNames[i], SplitNames[i]);
         }
+        }
+
+    // Allow optional overrides (e.g. from an event file). Overrides will add new mappings
+    // or replace existing mappings when keys collide.
+    public StationSplitMapper(IDictionary<string, string>? overrides) : this()
+    {
+        if (overrides == null) return;
+
+        foreach (var kvp in overrides)
+        {
+            // Normalize the key as-is; use the provided key format to match CSV values.
+            StationSplitMap[kvp.Key] = kvp.Value;
+        }
+    }
     }
 }
 
