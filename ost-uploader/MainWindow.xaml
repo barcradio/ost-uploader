@@ -64,7 +64,17 @@
                 <TextBox Name="exportType_textBox" HorizontalAlignment="Left" VerticalAlignment="Center" TextWrapping="Wrap" Text="" Margin="10,0,0,0" Width="120"/>
                 <Label Name="recordsLoaded_Label" Content="Records Loaded: 0" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0"/>
             </StackPanel>
-            <DataGrid x:Name="csvDataGrid" Grid.Row="1" d:ItemsSource="{d:SampleData ItemCount=5}" Height="280" VerticalAlignment="Top"/>
+            <DataGrid x:Name="csvDataGrid" Grid.Row="1" d:ItemsSource="{d:SampleData ItemCount=5}" Height="280" VerticalAlignment="Top" AutoGeneratingColumn="csvDataGrid_AutoGeneratingColumn">
+                <DataGrid.RowStyle>
+                    <Style TargetType="DataGridRow">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsDuplicate}" Value="True">
+                                <Setter Property="Background" Value="#FFF7E29B"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </DataGrid.RowStyle>
+            </DataGrid>
         </Grid>
         <StatusBar Name="statusBar" Height="30" VerticalAlignment="Bottom" >
             <Label Content="OST Site:" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0" />
