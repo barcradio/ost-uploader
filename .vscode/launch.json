@@ -1,0 +1,16 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Launch ost-uploader",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/ost-uploader/bin/Debug/net10.0-windows/ost-uploader.exe",
+      "args": [],
+      "cwd": "${workspaceFolder}/ost-uploader",
+      "console": "internalConsole",
+      "stopAtEntry": false
+    }
+  ]
+}
