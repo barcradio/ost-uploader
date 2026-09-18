@@ -99,4 +99,15 @@ public class TimesImporterTests
         Assert.Equal(0, entry.Index);
         Assert.Equal(0, entry.Sent);
     }
+
+    [Theory]
+    [InlineData("101.2", true)]
+    [InlineData("101", false)]
+    [InlineData("*", false)]
+    [InlineData("", false)]
+    [InlineData(null, false)]
+    public void IsDuplicateBib_DetectsDotTwoSuffix(string bibId, bool expected)
+    {
+        Assert.Equal(expected, TimeEntry.IsDuplicateBib(bibId));
+    }
 }

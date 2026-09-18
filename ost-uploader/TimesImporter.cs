@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Reflection.PortableExecutable;
+using System.Text.RegularExpressions;
 
 namespace ost_uploader
 {
@@ -80,6 +81,9 @@ namespace ost_uploader
 
     public class TimeEntry
     {
+        // Duplicate bib entries (e.g. "101.2") are re-sends for an already-recorded bib and must be skipped on upload.
+        private static readonly Regex DuplicateBibPattern = new(@"^\d+\.2$", RegexOptions.Compiled);
+
         public int Index { get; set; }
         public int Sent { get; set; }
         public required string BibId { get; set; }
@@ -88,5 +92,11 @@ namespace ost_uploader
         public string DropType { get; set; }
         public string DropStation { get; set; }
         public string Note { get; set; }
+
+        public bool IsDuplicate => IsDuplicateBib(BibId);
+        public string? DuplicateNote => IsDuplicate ? $"Duplicate bib — will not be uploaded to OST. Notify station." : null;
+
+        public static bool IsDuplicateBib(string bibId) =>
+            !string.IsNullOrWhiteSpace(bibId) && DuplicateBibPattern.IsMatch(bibId);
     }
 }

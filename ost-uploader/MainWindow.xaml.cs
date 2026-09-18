@@ -68,9 +68,9 @@ namespace ost_uploader
             _statusBarViewModel = new StatusBarViewModel();
             this.DataContext = _statusBarViewModel;
 
-            event_textBox.IsEnabled = false;
-            station_textBox.IsEnabled = false;
-            exportType_textBox.IsEnabled = false;
+            event_textBox.IsReadOnly = true;
+            station_textBox.IsReadOnly = true;
+            exportType_textBox.IsReadOnly = true;
             csvDataGrid.IsReadOnly = true;
 
             recordsLoaded_Label.Content = "Records Loaded: 0";
@@ -492,8 +492,8 @@ namespace ost_uploader
                 }
             }
 
-            // API schema validation: bib numbers may include only digits or "*".
-            var invalidBib = entries.FirstOrDefault(e => string.IsNullOrWhiteSpace(e.BibId) || e.BibId.Any(c => !(char.IsDigit(c) || c == '*')));
+            // API schema validation: bib numbers may include only digits or "*" (duplicate-bib rows are exempt; they're skipped on upload instead).
+            var invalidBib = entries.FirstOrDefault(e => !e.IsDuplicate && (string.IsNullOrWhiteSpace(e.BibId) || e.BibId.Any(c => !(char.IsDigit(c) || c == '*'))));
             if (invalidBib != null)
             {
                 MessageBox.Show($"Invalid bib number '{invalidBib.BibId}'. The API allows only digits 0-9 or '*'.");
@@ -509,6 +509,18 @@ namespace ost_uploader
             return true;
         }
 
+        private void csvDataGrid_AutoGeneratingColumn(object sender, DataGridAutoGeneratingColumnEventArgs e)
+        {
+            if (e.PropertyName == nameof(TimeEntry.IsDuplicate))
+            {
+                e.Cancel = true;
+            }
+            else if (e.PropertyName == nameof(TimeEntry.DuplicateNote))
+            {
+                e.Column.Header = "Status";
+            }
+        }
+
         protected virtual void OnTimesLoaded(EventArgs e, List<TimeEntry> entries, CsvHeader header)
         {
             TimesLoaded?.Invoke(this, e);
@@ -517,7 +529,11 @@ namespace ost_uploader
             station_textBox.Text = header.Fields[1];
             exportType_textBox.Text = header.Fields[2];
             csvDataGrid.ItemsSource = entries;
-            recordsLoaded_Label.Content = $"Records Loaded: {entries.Count}";
+
+            var duplicateCount = entries.Count(e => e.IsDuplicate);
+            recordsLoaded_Label.Content = duplicateCount > 0
+                ? $"Records Loaded: {entries.Count} ({duplicateCount} duplicate, will not upload)"
+                : $"Records Loaded: {entries.Count}";
         }
 
         private void browse_Button_Click(object sender, RoutedEventArgs e)
