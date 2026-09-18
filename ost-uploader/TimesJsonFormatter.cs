@@ -27,11 +27,11 @@ namespace ost_uploader
         public string Format(List<TimeEntry> entries)
         {
             var data = new List<JsonApiRawTime>();
-            var isDNF = false;
+            var isDrop = false;
 
             foreach (var entry in entries)
             {
-                isDNF = (entry.DnfType == "withdrew" || entry.DnfType == "medical" || entry.DnfType == "timeout");
+                isDrop = (entry.DropType == "withdrew" || entry.DropType == "medical" || entry.DropType == "timeout");
 
                 if (entry.TimeIn.HasValue && _allowedKinds.Contains("in"))
                 {
@@ -46,7 +46,7 @@ namespace ost_uploader
                             EnteredTime = FormatDateTime(entry.TimeIn.Value),
                             SplitName = _splitName,
                             BibNumber = entry.BibId,
-                            StoppedHere = isDNF ? "true" : "false"
+                            StoppedHere = isDrop ? "true" : "false"
                         }
                     });
                 }
@@ -63,7 +63,7 @@ namespace ost_uploader
                             EnteredTime = FormatDateTime(entry.TimeOut.Value),
                             SplitName = _splitName,
                             BibNumber = entry.BibId,
-                            StoppedHere = isDNF ? "true" : "false"
+                            StoppedHere = isDrop ? "true" : "false"
                         }
                     });
                 }

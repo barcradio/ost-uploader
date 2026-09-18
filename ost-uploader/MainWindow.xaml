@@ -27,13 +27,8 @@
             </Grid.RowDefinitions>
             <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,4,0,4" >
                 <Label Content="Event File:" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0"/>
-                <TextBox Name="eventFile_textBox" HorizontalAlignment="Left" VerticalAlignment="Center" TextWrapping="Wrap" Text="" Margin="10,0,0,0" Width="420"/>
-                <Button Name="browseEvent_Button" Style="{StaticResource StandardButton}" Content="Browse Event" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0" Click="browseEvent_Button_Click"/>
-                <Label Content="OST Site:" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0" />
-                <ComboBox x:Name="siteComboBox" Width="100" SelectedIndex="0" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="8,0,0,0" SelectionChanged="siteComboBox_SelectionChanged" IsEnabled="False">
-                    <ComboBoxItem>Production</ComboBoxItem>
-                    <ComboBoxItem>Staging</ComboBoxItem>
-                </ComboBox>
+                <TextBox Name="eventFile_textBox" HorizontalAlignment="Left" VerticalAlignment="Center" TextWrapping="Wrap" Text="" Margin="10,0,0,0" MinWidth="480"/>
+                <Button Name="browseEvent_Button" Style="{StaticResource StandardButton}" Content="Browse Event File" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0" Click="browseEvent_Button_Click"/>
             </StackPanel>
             <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0,4,0,4">
                 <Label Content="Email:" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0"/>
@@ -52,7 +47,7 @@
 
             <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,4,0,4" >
                 <Label Content="Select CSV File:" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0"/>
-                <TextBox Name="fileName_textBox" HorizontalAlignment="Left" VerticalAlignment="Center" TextWrapping="Wrap" Text="" Margin="10,0,0,0" Width="240"/>
+                <TextBox Name="fileName_textBox" HorizontalAlignment="Left" VerticalAlignment="Center" TextWrapping="Wrap" Text="" Margin="10,0,0,0" MinWidth="240"/>
                 <Button Name="browse_Button" Style="{StaticResource StandardButton}" Content="Load File" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0" Click="browse_Button_Click"/>
                 <Button Name="upload_Button" Style="{StaticResource StandardButton}" Content="Upload Data" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="10,0,10,0" Click="upload_Button_Click"/>
             </StackPanel>
@@ -72,6 +67,11 @@
             <DataGrid x:Name="csvDataGrid" Grid.Row="1" d:ItemsSource="{d:SampleData ItemCount=5}" Height="280" VerticalAlignment="Top"/>
         </Grid>
         <StatusBar Name="statusBar" Height="30" VerticalAlignment="Bottom" >
+            <Label Content="OST Site:" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0" />
+            <ComboBox x:Name="siteComboBox" Width="100" SelectedIndex="0" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="8,0,0,0" SelectionChanged="siteComboBox_SelectionChanged" IsEnabled="False">
+                <ComboBoxItem>Production</ComboBoxItem>
+                <ComboBoxItem>Staging</ComboBoxItem>
+            </ComboBox>
             <Label x:Name="event_Label" Content="OST Event"/>
             <TextBox x:Name="ostEvent_TextBox" TextWrapping="Wrap" Text="{Binding OSTEventName, UpdateSourceTrigger=PropertyChanged}" Width="150" IsEnabled="False"/>
             <Separator Height="30" HorizontalAlignment="Left" VerticalAlignment="Center" Width="1"/>

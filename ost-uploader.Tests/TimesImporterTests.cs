@@ -15,20 +15,20 @@ public class TimesImporterTests
     [Fact]
     public void Import_ParsesHeaderFromFirstLine()
     {
-        var csv = "Index,Sent,BibId,TimeIn,TimeOut,DnfType,DnfStation,Note\n" +
+        var csv = "Index,Sent,BibId,TimeIn,TimeOut,DropType,DropStation,Note\n" +
                    "metadata,line,to,skip,,,,\n" +
                    "1,1,101,08:00:00 01 Jan 2026,,,,\n";
         var path = WriteCsv(csv);
 
         var (header, entries) = new TimesImporter().Import(path);
 
-        Assert.Equal(new[] { "Index", "Sent", "BibId", "TimeIn", "TimeOut", "DnfType", "DnfStation", "Note" }, header.Fields);
+        Assert.Equal(new[] { "Index", "Sent", "BibId", "TimeIn", "TimeOut", "DropType", "DropStation", "Note" }, header.Fields);
     }
 
     [Fact]
     public void Import_SkipsMetadataLineAndParsesDataRows()
     {
-        var csv = "Index,Sent,BibId,TimeIn,TimeOut,DnfType,DnfStation,Note\n" +
+        var csv = "Index,Sent,BibId,TimeIn,TimeOut,DropType,DropStation,Note\n" +
                    "metadata,line,to,skip,,,,\n" +
                    "1,1,101,08:00:00 01 Jan 2026,09:00:00 01 Jan 2026,,,\n";
         var path = WriteCsv(csv);
@@ -46,7 +46,7 @@ public class TimesImporterTests
     [Fact]
     public void Import_SkipsRowsWithFewerThanEightFields()
     {
-        var csv = "Index,Sent,BibId,TimeIn,TimeOut,DnfType,DnfStation,Note\n" +
+        var csv = "Index,Sent,BibId,TimeIn,TimeOut,DropType,DropStation,Note\n" +
                    "metadata,line,to,skip,,,,\n" +
                    "1,1,101,08:00:00 01 Jan 2026\n";
         var path = WriteCsv(csv);
@@ -59,7 +59,7 @@ public class TimesImporterTests
     [Fact]
     public void Import_BlankTimeFieldsBecomeNull()
     {
-        var csv = "Index,Sent,BibId,TimeIn,TimeOut,DnfType,DnfStation,Note\n" +
+        var csv = "Index,Sent,BibId,TimeIn,TimeOut,DropType,DropStation,Note\n" +
                    "metadata,line,to,skip,,,,\n" +
                    "1,1,101,,,,,\n";
         var path = WriteCsv(csv);
@@ -74,7 +74,7 @@ public class TimesImporterTests
     [Fact]
     public void Import_UnparseableTimeFieldBecomesNull()
     {
-        var csv = "Index,Sent,BibId,TimeIn,TimeOut,DnfType,DnfStation,Note\n" +
+        var csv = "Index,Sent,BibId,TimeIn,TimeOut,DropType,DropStation,Note\n" +
                    "metadata,line,to,skip,,,,\n" +
                    "1,1,101,not-a-date,,,,\n";
         var path = WriteCsv(csv);
@@ -88,7 +88,7 @@ public class TimesImporterTests
     [Fact]
     public void Import_NonNumericIndexAndSentDefaultToZero()
     {
-        var csv = "Index,Sent,BibId,TimeIn,TimeOut,DnfType,DnfStation,Note\n" +
+        var csv = "Index,Sent,BibId,TimeIn,TimeOut,DropType,DropStation,Note\n" +
                    "metadata,line,to,skip,,,,\n" +
                    "abc,xyz,101,,,,,\n";
         var path = WriteCsv(csv);

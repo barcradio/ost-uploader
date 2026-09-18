@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Security;
 using System.Text.Json;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -48,6 +49,7 @@ namespace ost_uploader
         private string _loadedFilePath = string.Empty;
         private bool _hasLoadedTimes = false;
         private string? _json = null;
+        private readonly EventFilePreferenceStore _eventFilePreferenceStore = new EventFilePreferenceStore();
         private StationSplitMapper _stationNameMap = new StationSplitMapper();
         private string? _eventFilePath = null;
         private Dictionary<string, HashSet<string>> _splitEntryKindsBySplit =
@@ -56,8 +58,9 @@ namespace ost_uploader
 
         public MainWindow()
         {
-            InitializeComponent();
+            _suppressSitePrompt = true;
             _credentialStore = new SecureCredentialStore();
+            InitializeComponent();
             // Initialize API base from site selector (default to Production)
             _apiBaseUrl = GetBaseUrlFromSelection();
             // record initial selection index
@@ -72,13 +75,18 @@ namespace ost_uploader
 
             recordsLoaded_Label.Content = "Records Loaded: 0";
             _statusBarViewModel.StatusMessage = "Load an event zip file to select an OST environment.";
-            _statusBarViewModel.OSTEventName = $"Event: {_targetEventId}";
+            _statusBarViewModel.OSTEventName = $"{_targetEventId}";
 
             // Authentication is unavailable until valid OST metadata is loaded from stations.json in an event zip.
             loginButton.IsEnabled = false;
             userEmail_TextBox.IsEnabled = false;
             password_TextBox.IsEnabled = false;
             saveToken_CheckBox.IsEnabled = false;
+
+            _suppressSitePrompt = false;
+
+            if (_eventFilePreferenceStore.TryGetExistingPath(out var lastEventFilePath))
+                LoadEventFileFromPath(lastEventFilePath, showErrors: false);
 
             this.Show();
         }
@@ -93,8 +101,9 @@ namespace ost_uploader
 
                 if (_isAuthenticated && _authResponse != null)
                 {
-                    authStatus_Label.Content = "Authenticated";
-                    authStatus_Label.ToolTip = "Token Expiration: " + _authResponse.expiration;
+                    var expiration = FormatTokenExpiration(_authResponse.expiration);
+                    authStatus_Label.Content = $"Authenticated (expires: {expiration})";
+                    authStatus_Label.ToolTip = "Token Expiration: " + expiration;
                     authStatus_Label.Visibility = Visibility.Visible;
                     authStatus_Label.Foreground = Brushes.Black;
                     loginButton.IsEnabled = false;
@@ -103,7 +112,7 @@ namespace ost_uploader
                     {
                         if (saveToken_CheckBox != null && saveToken_CheckBox.IsChecked == true)
                         {
-                            _credentialStore.SaveToken(_authResponse, _apiBaseUrl);
+                            _credentialStore.SaveToken(_authResponse, _apiBaseUrl, userEmail, password);
                         }
                         else
                         {
@@ -254,6 +263,8 @@ namespace ost_uploader
                 if (siteComboBox == null) return "";
                 var item = siteComboBox.SelectedItem as ComboBoxItem;
                 if (item == null) return "";
+                if (item.Tag is SiteEntry site)
+                    return site.Url;
                 var tag = (item.Tag ?? string.Empty).ToString();
                 return tag;
             }
@@ -275,8 +286,25 @@ namespace ost_uploader
             return $"{uri.Scheme}://{authority}";
         }
 
+        private static string FormatTokenExpiration(string expiration)
+        {
+            if (DateTimeOffset.TryParse(
+                expiration,
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal,
+                out var parsed))
+            {
+                return parsed.ToLocalTime().ToString("g", CultureInfo.CurrentCulture);
+            }
+
+            return expiration;
+        }
+
         private void siteComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            if (password_TextBox == null)
+                return;
+
             // If we're programmatically changing the selection (e.g., because an event file loaded), don't prompt.
             if (_suppressSitePrompt)
             {
@@ -311,20 +339,51 @@ namespace ost_uploader
                 _lastSiteIndex = newIndex;
                 _splitEntryKindsBySplit = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
                 _splitKindSyncStatusMessage = null;
+                password_TextBox.Clear();
+                saveToken_CheckBox.IsChecked = false;
+                RestoreSavedCredentialsForSite(newUrl);
 
-                if (_isAuthenticated)
-                {
-                    _isAuthenticated = false;
-                    _authResponse = null;
-                    authStatus_Label.Content = "Not Authenticated";
-                    authStatus_Label.ToolTip = string.Empty;
-                    authStatus_Label.Visibility = Visibility.Visible;
-                    authStatus_Label.Foreground = Brushes.Red;
-                    loginButton.IsEnabled = true;
-                    _statusBarViewModel.OSTEventName = $"Event: {_targetEventId}";
-                    _statusBarViewModel.StatusMessage = $"Waiting for authentication";
-                }
+                _statusBarViewModel.OSTEventName = GetSelectedSiteEventName();
+                _statusBarViewModel.StatusMessage = _isAuthenticated ? "Ready" : "Waiting for authentication";
             }
+        }
+
+        private string GetSelectedSiteEventName()
+        {
+            var selected = siteComboBox?.SelectedItem as ComboBoxItem;
+            return selected?.Tag is SiteEntry site
+                ? $"Event: {site.EventSlug}"
+                : _statusBarViewModel.OSTEventName;
+        }
+
+        private void RestoreSavedCredentialsForSite(string baseUrl)
+        {
+            _isAuthenticated = false;
+            _authResponse = null;
+            authStatus_Label.Content = "Not Authenticated";
+            authStatus_Label.ToolTip = string.Empty;
+            authStatus_Label.Visibility = Visibility.Visible;
+            authStatus_Label.Foreground = Brushes.Red;
+            loginButton.IsEnabled = true;
+
+            if (!_credentialStore.TryGetSavedCredentials(baseUrl, out var email, out var password, out var saved))
+                return;
+
+            userEmail_TextBox.Text = email;
+            password_TextBox.Password = new System.Net.NetworkCredential(string.Empty, password).Password;
+            saveToken_CheckBox.IsChecked = true;
+
+            if (string.IsNullOrWhiteSpace(saved.token) || string.IsNullOrWhiteSpace(saved.expiration) ||
+                !DateTime.TryParse(saved.expiration, out var expiration) || expiration.ToUniversalTime() <= DateTime.UtcNow)
+                return;
+
+            _authResponse = saved;
+            _isAuthenticated = true;
+            var formattedExpiration = FormatTokenExpiration(saved.expiration);
+            authStatus_Label.Content = $"Authenticated (saved, expires: {formattedExpiration})";
+            authStatus_Label.ToolTip = "Token Expiration: " + formattedExpiration;
+            authStatus_Label.Foreground = Brushes.Black;
+            loginButton.IsEnabled = false;
         }
 
         private bool IsProductionUrl(string url)
@@ -512,17 +571,19 @@ namespace ost_uploader
             }
         }
 
-        private void LoadEventFileFromPath(string path)
+        private void LoadEventFileFromPath(string path, bool showErrors = true)
         {
             if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
             {
-                MessageBox.Show("Event file not found.");
+                if (showErrors)
+                    MessageBox.Show("Event file not found.");
                 return;
             }
 
             if (EventFileLoader.TryLoad(path, out var data))
             {
                 _eventFilePath = path;
+                _eventFilePreferenceStore.SavePath(path);
                 _stationNameMap = new StationSplitMapper(data.StationMap);
                 _splitEntryKindsBySplit = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
                 _splitKindSyncStatusMessage = null;
@@ -542,7 +603,7 @@ namespace ost_uploader
                     {
                         foreach (var s in sites)
                         {
-                            var item = new ComboBoxItem { Content = s.Title, Tag = s.Url };
+                            var item = new ComboBoxItem { Content = s.Title, Tag = s };
                             siteComboBox.Items.Add(item);
                         }
 
@@ -553,7 +614,7 @@ namespace ost_uploader
                         for (int i = 0; i < siteComboBox.Items.Count; i++)
                         {
                             var itm = siteComboBox.Items[i] as ComboBoxItem;
-                            var tag = (itm?.Tag ?? string.Empty).ToString();
+                            var tag = itm?.Tag is SiteEntry site ? site.Url : (itm?.Tag ?? string.Empty).ToString();
                             if (!string.IsNullOrWhiteSpace(tag) && tag.Contains("staging", StringComparison.OrdinalIgnoreCase))
                             {
                                 preferred = i; break;
@@ -569,40 +630,10 @@ namespace ost_uploader
                         userEmail_TextBox.IsEnabled = true;
                         password_TextBox.IsEnabled = true;
                         saveToken_CheckBox.IsEnabled = true;
+                        saveToken_CheckBox.IsChecked = false;
 
-                        // Restore a saved token only when it matches the selected connection URL.
-                        _isAuthenticated = false;
-                        _authResponse = null;
-                        try
-                        {
-                            if (_credentialStore.TryGetValidToken(out var saved, out var savedBaseUrl) &&
-                                !string.IsNullOrWhiteSpace(savedBaseUrl) &&
-                                string.Equals(savedBaseUrl, _apiBaseUrl, StringComparison.OrdinalIgnoreCase))
-                            {
-                                _authResponse = saved;
-                                _isAuthenticated = true;
-                                authStatus_Label.Content = "Authenticated (saved)";
-                                authStatus_Label.ToolTip = "Token Expiration: " + _authResponse.expiration;
-                                authStatus_Label.Visibility = Visibility.Visible;
-                                authStatus_Label.Foreground = Brushes.Black;
-                                loginButton.IsEnabled = false;
-                                _statusBarViewModel.StatusMessage = "Ready";
-                            }
-                            else
-                            {
-                                authStatus_Label.Content = "Not Authenticated";
-                                authStatus_Label.ToolTip = string.Empty;
-                                authStatus_Label.Visibility = Visibility.Visible;
-                                authStatus_Label.Foreground = Brushes.Red;
-                            }
-                        }
-                        catch
-                        {
-                            authStatus_Label.Content = "Not Authenticated";
-                            authStatus_Label.ToolTip = string.Empty;
-                            authStatus_Label.Visibility = Visibility.Visible;
-                            authStatus_Label.Foreground = Brushes.Red;
-                        }
+                        RestoreSavedCredentialsForSite(_apiBaseUrl);
+                        _statusBarViewModel.OSTEventName = GetSelectedSiteEventName();
                     }
                     else
                     {
@@ -630,7 +661,8 @@ namespace ost_uploader
             }
             else
             {
-                MessageBox.Show("Failed to load event file. The file may be malformed.");
+                if (showErrors)
+                    MessageBox.Show("Failed to load event file. The file may be malformed.");
                 _statusBarViewModel.StatusMessage = "Event file load failed.";
             }
         }
