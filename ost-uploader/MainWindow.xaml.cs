@@ -50,6 +50,9 @@ namespace ost_uploader
         private string? _json = null;
         private StationSplitMapper _stationNameMap = new StationSplitMapper();
         private string? _eventFilePath = null;
+        private Dictionary<string, HashSet<string>> _splitEntryKindsBySplit =
+            new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
+        private string? _splitKindSyncStatusMessage;
 
         public MainWindow()
         {
@@ -140,8 +143,108 @@ namespace ost_uploader
             _isAuthenticated = !string.IsNullOrWhiteSpace(_authResponse.token);
             if (_isAuthenticated)
             {
-                _statusBarViewModel.StatusMessage = "Ready";
+                await SyncSplitEntryKindsAsync();
+                _statusBarViewModel.StatusMessage = _splitKindSyncStatusMessage ?? "Ready";
             }
+        }
+
+        private async Task SyncSplitEntryKindsAsync()
+        {
+            _splitEntryKindsBySplit = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
+            _splitKindSyncStatusMessage = null;
+
+            if (_authResponse == null || string.IsNullOrWhiteSpace(_authResponse.token))
+            {
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(_apiBaseUrl))
+            {
+                _splitKindSyncStatusMessage = "Ready (OpenSplitTime split-kind sync unavailable: site not selected)";
+                return;
+            }
+
+            try
+            {
+                var apiClient = new OpenSplitTimeApiClient(_apiBaseUrl, _authResponse.token);
+                var response = await apiClient.GetAsync(string.Empty);
+                var eventGroup = JsonSerializer.Deserialize<OSTEventGroup>(response);
+                _splitEntryKindsBySplit = BuildSplitEntryKindsLookup(eventGroup);
+            }
+            catch (Exception ex)
+            {
+                _splitKindSyncStatusMessage =
+                    $"Ready (OpenSplitTime split-kind sync unavailable: {ex.Message})";
+            }
+        }
+
+        private static Dictionary<string, HashSet<string>> BuildSplitEntryKindsLookup(OSTEventGroup? eventGroup)
+        {
+            var splitEntryKinds = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
+            var attributes = eventGroup?.data?.attributes;
+            var groups = new List<DataEntryGroup>();
+
+            if (attributes?.dataEntryGroups != null)
+            {
+                groups.AddRange(attributes.dataEntryGroups);
+            }
+
+            if (attributes?.unpairedDataEntryGroups != null)
+            {
+                groups.AddRange(attributes.unpairedDataEntryGroups);
+            }
+
+            foreach (var group in groups)
+            {
+                if (group?.entries == null)
+                {
+                    continue;
+                }
+
+                foreach (var entry in group.entries)
+                {
+                    var splitName = entry?.splitName?.Trim();
+                    if (string.IsNullOrWhiteSpace(splitName) || string.IsNullOrWhiteSpace(entry.subSplitKind))
+                    {
+                        continue;
+                    }
+
+                    if (!splitEntryKinds.TryGetValue(splitName, out var allowedKinds))
+                    {
+                        allowedKinds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                        splitEntryKinds[splitName] = allowedKinds;
+                    }
+
+                    foreach (var kind in NormalizeSplitKinds(entry.subSplitKind))
+                    {
+                        allowedKinds.Add(kind);
+                    }
+                }
+            }
+
+            return splitEntryKinds;
+        }
+
+        private static IEnumerable<string> NormalizeSplitKinds(string rawKind)
+        {
+            var normalized = rawKind.Trim().ToLowerInvariant();
+            return normalized switch
+            {
+                "in" => new[] { "in" },
+                "out" => new[] { "out" },
+                "inout" => new[] { "in", "out" },
+                _ => Array.Empty<string>()
+            };
+        }
+
+        private IEnumerable<string> ResolveAllowedKindsForSplit(string splitName)
+        {
+            if (_splitEntryKindsBySplit.TryGetValue(splitName, out var allowedKinds))
+            {
+                return allowedKinds;
+            }
+
+            return new[] { "in", "out" };
         }
 
         private string GetBaseUrlFromSelection()
@@ -206,6 +309,8 @@ namespace ost_uploader
                 // Accept the change: update base URL and de-authenticate
                 _apiBaseUrl = newUrl;
                 _lastSiteIndex = newIndex;
+                _splitEntryKindsBySplit = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
+                _splitKindSyncStatusMessage = null;
 
                 if (_isAuthenticated)
                 {
@@ -336,7 +441,8 @@ namespace ost_uploader
                 return false;
             }
 
-            var formatter = new TimesJsonFormatter(AppName + "_" + fileName, mappedSplit);
+            var allowedKinds = ResolveAllowedKindsForSplit(mappedSplit);
+            var formatter = new TimesJsonFormatter(AppName + "_" + fileName, mappedSplit, allowedKinds);
             json = formatter.Format(entries);
 
             OnTimesLoaded(EventArgs.Empty, entries, header);
@@ -418,6 +524,8 @@ namespace ost_uploader
             {
                 _eventFilePath = path;
                 _stationNameMap = new StationSplitMapper(data.StationMap);
+                _splitEntryKindsBySplit = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
+                _splitKindSyncStatusMessage = null;
                 eventFile_textBox.Text = path;
                 // Populate siteComboBox from event file Sites (authoritative source of OST endpoints)
                 try
@@ -541,6 +649,17 @@ namespace ost_uploader
                 {
                     MessageBox.Show("JSON data is missing. Please load times from a CSV file first.");
                     return;
+                }
+
+                await SyncSplitEntryKindsAsync();
+                if (!LoadTimes(_loadedFilePath, out _json) || string.IsNullOrWhiteSpace(_json))
+                {
+                    return;
+                }
+
+                if (!string.IsNullOrWhiteSpace(_splitKindSyncStatusMessage))
+                {
+                    _statusBarViewModel.StatusMessage = _splitKindSyncStatusMessage;
                 }
 
                 File.WriteAllText("output.json", _json);

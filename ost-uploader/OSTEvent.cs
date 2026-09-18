@@ -11,12 +11,25 @@ namespace ost_uploader
         public Data data { get; set; }
     }
 
+    public class OSTEventGroup
+    {
+        public EventGroupData data { get; set; }
+    }
+
     public class Data
     {
         public string id { get; set; }
         public string type { get; set; }
         public Attributes attributes { get; set; }
         public Relationships relationships { get; set; }
+        public Links links { get; set; }
+    }
+
+    public class EventGroupData
+    {
+        public string id { get; set; }
+        public string type { get; set; }
+        public EventGroupAttributes attributes { get; set; }
         public Links links { get; set; }
     }
 
@@ -41,6 +54,24 @@ namespace ost_uploader
         public bool multipleSubSplits { get; set; }
         public string[] parameterizedSplitNames { get; set; }
         public string[] splitNames { get; set; }
+    }
+
+    public class EventGroupAttributes
+    {
+        public int id { get; set; }
+        public List<DataEntryGroup> dataEntryGroups { get; set; }
+        public List<DataEntryGroup> unpairedDataEntryGroups { get; set; }
+    }
+
+    public class DataEntryGroup
+    {
+        public List<DataEntryGroupEntry> entries { get; set; }
+    }
+
+    public class DataEntryGroupEntry
+    {
+        public string splitName { get; set; }
+        public string subSplitKind { get; set; }
     }
 
     public class Relationships

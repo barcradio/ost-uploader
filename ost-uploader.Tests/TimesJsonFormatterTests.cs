@@ -57,6 +57,45 @@ public class TimesJsonFormatterTests
         Assert.Equal("out", data[1].GetProperty("attributes").GetProperty("sub_split_kind").GetString());
     }
 
+    [Fact]
+    public void Format_AllowedKindsFilterRecords()
+    {
+        var entries = new List<TimeEntry>
+        {
+            new()
+            {
+                BibId = "101",
+                TimeIn = new DateTime(2026, 1, 1, 8, 0, 0),
+                TimeOut = new DateTime(2026, 1, 1, 8, 5, 0)
+            }
+        };
+
+        var json = new TimesJsonFormatter("aid-1", "Start", new[] { "out" }).Format(entries);
+        var data = ParseData(json).EnumerateArray().ToList();
+
+        var record = Assert.Single(data);
+        Assert.Equal("out", record.GetProperty("attributes").GetProperty("sub_split_kind").GetString());
+    }
+
+    [Fact]
+    public void Format_ExplicitlyEmptyAllowedKinds_ProducesNoRecords()
+    {
+        var entries = new List<TimeEntry>
+        {
+            new()
+            {
+                BibId = "101",
+                TimeIn = new DateTime(2026, 1, 1, 8, 0, 0),
+                TimeOut = new DateTime(2026, 1, 1, 8, 5, 0)
+            }
+        };
+
+        var json = new TimesJsonFormatter("aid-1", "Start", Array.Empty<string>()).Format(entries);
+        var data = ParseData(json);
+
+        Assert.Equal(0, data.GetArrayLength());
+    }
+
     [Theory]
     [InlineData("withdrew", "true")]
     [InlineData("medical", "true")]
