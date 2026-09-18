@@ -68,9 +68,9 @@ namespace ost_uploader
             _statusBarViewModel = new StatusBarViewModel();
             this.DataContext = _statusBarViewModel;
 
-            event_textBox.IsEnabled = false;
-            station_textBox.IsEnabled = false;
-            exportType_textBox.IsEnabled = false;
+            event_textBox.IsReadOnly = true;
+            station_textBox.IsReadOnly = true;
+            exportType_textBox.IsReadOnly = true;
             csvDataGrid.IsReadOnly = true;
 
             recordsLoaded_Label.Content = "Records Loaded: 0";
