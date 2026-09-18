@@ -14,7 +14,7 @@ The app is intended for the common workflow used by the Bridgerland Amateur Radi
 2. Select the correct OST site from the event metadata.
 3. Authenticate to OpenSplitTime.
 4. Load the UltraTracker CSV export.
-5. Review the imported rows and duplicate records.
+5. Review the imported rows for validity, flag duplicate and did-not-start records.
 6. Upload the validated data.
 
 The tool is a Windows WPF application and is built for Windows 10/11.
@@ -91,7 +91,7 @@ The app maps the station token from the CSV to the OST split name using the even
 1. Click Load File.
 2. Select the UltraTracker CSV.
 3. The app loads the rows into the grid.
-4. Duplicate rows are highlighted in yellow and are excluded from upload.
+4. Duplicate and did-not-start rows are highlighted in yellow and are excluded from upload.
 5. Rows with unknown participant bibId's will be uploaded, but will not be matched to an participant.
 6. The records summary shows the total number of rows and duplicate count.
 
