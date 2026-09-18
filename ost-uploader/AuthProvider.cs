@@ -13,10 +13,12 @@ namespace ost_uploader
     public class AuthProvider
     {
         private readonly HttpClient _httpClient;
+        private readonly string _baseUrl;
         private APIAuthResponse _authResponse;
 
-        public AuthProvider()
+        public AuthProvider(string baseUrl)
         {
+            _baseUrl = string.IsNullOrWhiteSpace(baseUrl) ? "https://www.opensplittime.org" : baseUrl.TrimEnd('/');
             _httpClient = new HttpClient();
             _httpClient.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
             _authResponse = new APIAuthResponse();
@@ -46,8 +48,7 @@ namespace ost_uploader
                 var jsonPayload = JsonSerializer.Serialize(payload);
                 var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
 
-                var task = _httpClient.PostAsync("https://www.opensplittime.org/api/v1/auth", content);
-                var response = task.GetAwaiter().GetResult();
+                var response = await _httpClient.PostAsync($"{_baseUrl}/api/v1/auth", content);
 
                 response.EnsureSuccessStatusCode();
                 var responseContent = await response.Content.ReadAsStringAsync();

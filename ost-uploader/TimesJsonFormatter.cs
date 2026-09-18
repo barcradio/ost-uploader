@@ -16,15 +16,12 @@ namespace ost_uploader
         {
             _source = source;
             _splitName = splitName;
-            _allowedKinds = new HashSet<string>(
-                (allowedKinds ?? new[] { "in", "out" })
-                .Where(kind => !string.IsNullOrWhiteSpace(kind))
-                .Select(kind => kind.Trim().ToLowerInvariant()));
-
-            if (_allowedKinds.Count == 0)
-            {
-                _allowedKinds.UnionWith(new[] { "in", "out" });
-            }
+            _allowedKinds = allowedKinds == null
+                ? new HashSet<string>(new[] { "in", "out" })
+                : new HashSet<string>(
+                    allowedKinds
+                        .Where(kind => !string.IsNullOrWhiteSpace(kind))
+                        .Select(kind => kind.Trim().ToLowerInvariant()));
         }
 
         public string Format(List<TimeEntry> entries)
@@ -90,10 +87,9 @@ namespace ost_uploader
 
         private static string FormatDateTime(DateTime dt)
         {
-            // Example: "2023-08-09 09:16:01-6:00"
-            var offset = TimeZoneInfo.Local.GetUtcOffset(dt);
-            var offsetStr = $"{(offset.Hours >= 0 ? "+" : "-")}{Math.Abs(offset.Hours)}:00";
-            return dt.ToString("yyyy-MM-dd HH:mm:ss") + offsetStr;
+            // Required shape: "YYYY-MM-DD HH:MM:SS±HH:MM"
+            var dto = new DateTimeOffset(dt, TimeZoneInfo.Local.GetUtcOffset(dt));
+            return dto.ToString("yyyy-MM-dd HH:mm:sszzz");
         }
 
         private class JsonApiRoot

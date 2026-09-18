@@ -2,12 +2,13 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows</TargetFramework>
+    <TargetFramework>net10.0-windows</TargetFramework>
     <RootNamespace>ost_uploader</RootNamespace>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationIcon>resources\ost-icon.ico</ApplicationIcon>
+    <Version Condition="'$(Version)' == ''">0.0.0-dev</Version>
   </PropertyGroup>
 
   <ItemGroup>
