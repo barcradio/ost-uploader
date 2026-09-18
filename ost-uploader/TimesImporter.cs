@@ -42,8 +42,8 @@ namespace ost_uploader
                     BibId = fields[2],
                     TimeIn = ParseDateTime(fields[3]),
                     TimeOut = ParseDateTime(fields[4]),
-                    DnfType = fields[5],
-                    DnfStation = fields[6],
+                    DropType = fields[5],
+                    DropStation = fields[6],
                     Note = fields[7]
                 };
 
@@ -85,8 +85,8 @@ namespace ost_uploader
         public required string BibId { get; set; }
         public DateTime? TimeIn { get; set; }
         public DateTime? TimeOut { get; set; }
-        public string DnfType { get; set; }
-        public string DnfStation { get; set; }
+        public string DropType { get; set; }
+        public string DropStation { get; set; }
         public string Note { get; set; }
     }
 }

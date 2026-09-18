@@ -22,6 +22,29 @@ public class EventFileLoaderTests
         return path;
     }
 
+      [Fact]
+      public void EventFilePreferenceStore_SavesAndLoadsExistingPath()
+      {
+        var eventFilePath = WriteZip("{}");
+        var preferencePath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+        var store = new EventFilePreferenceStore(preferencePath);
+
+        Assert.True(store.SavePath(eventFilePath));
+        Assert.True(store.TryGetExistingPath(out var savedPath));
+        Assert.Equal(eventFilePath, savedPath);
+      }
+
+      [Fact]
+      public void EventFilePreferenceStore_IgnoresMissingSavedPath()
+      {
+        var preferencePath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+        var store = new EventFilePreferenceStore(preferencePath);
+        var missingPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName() + ".zip");
+
+        Assert.True(store.SavePath(missingPath));
+        Assert.False(store.TryGetExistingPath(out _));
+      }
+
     [Fact]
     public void TryLoad_MissingFile_ReturnsFalse()
     {

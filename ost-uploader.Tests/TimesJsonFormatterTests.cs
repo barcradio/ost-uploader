@@ -102,11 +102,11 @@ public class TimesJsonFormatterTests
     [InlineData("timeout", "true")]
     [InlineData("", "false")]
     [InlineData("finished", "false")]
-    public void Format_DnfTypeControlsStoppedHereFlag(string dnfType, string expectedStoppedHere)
+    public void Format_DropTypeControlsStoppedHereFlag(string dropType, string expectedStoppedHere)
     {
         var entries = new List<TimeEntry>
         {
-            new() { BibId = "101", TimeIn = new DateTime(2026, 1, 1, 8, 0, 0), DnfType = dnfType }
+            new() { BibId = "101", TimeIn = new DateTime(2026, 1, 1, 8, 0, 0), DropType = dropType }
         };
 
         var json = new TimesJsonFormatter("aid-1", "Start").Format(entries);
