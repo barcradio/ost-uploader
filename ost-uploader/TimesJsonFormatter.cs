@@ -31,6 +31,8 @@ namespace ost_uploader
 
             foreach (var entry in entries)
             {
+                if (entry.IsDidNotStart) continue; // DNS rows stay visible in the grid but are never uploaded
+
                 isDrop = (entry.DropType == "withdrew" || entry.DropType == "medical" || entry.DropType == "timeout");
 
                 if (entry.TimeIn.HasValue && _allowedKinds.Contains("in"))

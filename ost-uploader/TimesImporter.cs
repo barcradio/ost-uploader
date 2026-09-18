@@ -88,5 +88,8 @@ namespace ost_uploader
         public string DropType { get; set; }
         public string DropStation { get; set; }
         public string Note { get; set; }
+
+        public bool IsDidNotStart => string.Equals(DropType?.Trim(), "did-not-start", StringComparison.OrdinalIgnoreCase);
+        public string? DidNotStartNote => IsDidNotStart ? "Did not start - will not be uploaded to OST." : null;
     }
 }
