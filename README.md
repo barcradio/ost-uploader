@@ -29,14 +29,13 @@ The tool is a Windows WPF application and is built for Windows 10/11.
 
 ## Event file requirements
 
-This project expects event packages to be a single ZIP file containing `stations.json`.
+Refer to the Ultra-Tracker [Event File Creation](https://github.com/barcradio/ultra-tracker/wiki/Event-File-Creation) documentation.
 
-The application reads OST connection metadata from:
+For most users, this file will be prepared by your event organizers.
 
-- `event.openSplitTime.production` — required
-- `event.openSplitTime.staging` — optional
+This project expects event packages to be a single ZIP file containing `stations.json` from which it reads the OST connection metadata for your event.
 
-The app populates the OST site selector from these metadata entries and uses them as the authoritative list of available environments. If the event metadata includes a staging site, the app prefers staging by default.
+If the event metadata includes a staging site, the app prefers staging by default to use for testing.
 
 If the event ZIP is missing `stations.json` or the `event.openSplitTime` block is not present, the app will not allow authentication because it cannot determine the target OST environment.
 
