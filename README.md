@@ -41,11 +41,10 @@ If the event ZIP is missing `stations.json` or the `event.openSplitTime` block i
 
 ## Installation
 
-1. Download the latest release for Windows.
+1. Download the latest release for Windows from the [Releases](https://github.com/barcradio/ost-uploader/releases) page.
 2. Extract the files to a local folder.
 3. Run the executable.
 4. If prompted by Microsoft Defender SmartScreen click More Info and then click Run Anyway.
-
 
 ## First-time workflow
 
