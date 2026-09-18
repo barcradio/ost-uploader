@@ -43,29 +43,27 @@ namespace ost_uploader
                 var url = $"{_baseUrl}{endpoint}";
                 var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
                 var response = await _httpClient.PostAsync(url, content);
-                response.EnsureSuccessStatusCode();
-                return await response.Content.ReadAsStringAsync();
+                var responseText = await response.Content.ReadAsStringAsync();
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var status = (int)response.StatusCode;
+                    var details = string.IsNullOrWhiteSpace(responseText) ? "No response body returned." : responseText;
+                    throw new HttpRequestException($"HTTP {status}: {details}", null, response.StatusCode);
+                }
+
+                return responseText;
             }
             catch (HttpRequestException ex)
             {
                 if (ex.StatusCode.HasValue)
-                {
-                    if (ex.StatusCode == (HttpStatusCode)422)
-                    {
-                        // record is duplicate?
-                    }
                     MessageBox.Show($"HTTP Error {(int)ex.StatusCode.Value}: {ex.Message}");
-                }
                 else
-                {
-                    // Handle HTTP request errors
                     MessageBox.Show($"Request error: {ex.Message}");
-                }
                 throw;
             }
             catch (Exception ex)
             {
-                // Handle other potential errors
                 MessageBox.Show($"Unexpected error: {ex.Message}");
                 throw;
             }
