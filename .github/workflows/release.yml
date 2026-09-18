@@ -29,13 +29,13 @@ jobs:
           "version=$version" >> $env:GITHUB_OUTPUT
 
       - name: Restore
-        run: dotnet restore ost-uploader.sln
+        run: dotnet restore ost-uploader.sln /p:Version=${{ steps.version.outputs.version }}
 
       - name: Build
-        run: dotnet build ost-uploader.sln --configuration Release --no-restore
+        run: dotnet build ost-uploader.sln --configuration Release --no-restore /p:Version=${{ steps.version.outputs.version }}
 
       - name: Test
-        run: dotnet test ost-uploader.sln --configuration Release --no-build
+        run: dotnet test ost-uploader.sln --configuration Release --no-build /p:Version=${{ steps.version.outputs.version }}
 
       - name: Publish
         run: >
