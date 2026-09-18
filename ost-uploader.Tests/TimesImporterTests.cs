@@ -110,4 +110,18 @@ public class TimesImporterTests
     {
         Assert.Equal(expected, TimeEntry.IsDuplicateBib(bibId));
     }
+
+    [Theory]
+    [InlineData("did-not-start", true)]
+    [InlineData(" DID-NOT-START ", true)]
+    [InlineData("withdrew", false)]
+    [InlineData("", false)]
+    [InlineData(null, false)]
+    public void IsDidNotStart_DetectsDidNotStartDropReason(string dropType, bool expected)
+    {
+        var entry = new TimeEntry { BibId = "101", DropType = dropType };
+
+        Assert.Equal(expected, entry.IsDidNotStart);
+        Assert.Equal(expected ? "Did not start - will not be uploaded to OST." : null, entry.DidNotStartNote);
+    }
 }
