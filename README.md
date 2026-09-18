@@ -45,12 +45,8 @@ If the event ZIP is missing `stations.json` or the `event.openSplitTime` block i
 1. Download the latest release for Windows.
 2. Extract the files to a local folder.
 3. Run the executable.
-4. If you are building from source, use:
+4. If prompted by Microsoft Defender SmartScreen click More Info and then click Run Anyway.
 
-   ```powershell
-   dotnet restore
-   dotnet build ost-uploader.sln
-   ```
 
 ## First-time workflow
 
