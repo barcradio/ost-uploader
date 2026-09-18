@@ -25,6 +25,24 @@ public class SecureCredentialStoreTests
     }
 
     [Fact]
+    public void SaveToken_WithCredentials_RestoresAcrossEventGroupsInSameEnvironment()
+    {
+        var store = new SecureCredentialStore(Path.Combine(Path.GetTempPath(), Path.GetRandomFileName()));
+        var password = new NetworkCredential(string.Empty, "secret-password").SecurePassword;
+        var auth = new APIAuthResponse
+        {
+            token = "token",
+            expiration = DateTime.UtcNow.AddHours(1).ToString("O")
+        };
+
+        Assert.True(store.SaveToken(auth, "https://staging.opensplittime.org/api/v1/event_groups/10", "user@example.test", password));
+        Assert.True(store.TryGetSavedCredentials("https://staging.opensplittime.org/api/v1/event_groups/20", out var email, out var savedPassword, out var savedAuth));
+        Assert.Equal("user@example.test", email);
+        Assert.Equal("secret-password", new NetworkCredential(string.Empty, savedPassword).Password);
+        Assert.Equal("token", savedAuth.token);
+    }
+
+    [Fact]
     public void TokenOnlyCredentials_AreNotReportedAsSavedLoginCredentials()
     {
         var store = new SecureCredentialStore(Path.Combine(Path.GetTempPath(), Path.GetRandomFileName()));

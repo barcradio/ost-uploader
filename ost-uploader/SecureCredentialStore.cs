@@ -53,11 +53,12 @@ namespace ost_uploader
             email = string.Empty;
             password = new SecureString();
             auth = new APIAuthResponse();
+            var normalizedBaseUrl = NormalizeBaseUrl(baseUrl);
 
-            if (string.IsNullOrWhiteSpace(baseUrl) || !TryReadSavedCredential(GetCredentialFilePath(baseUrl), out var saved) ||
+            if (string.IsNullOrWhiteSpace(normalizedBaseUrl) || !TryReadSavedCredential(GetCredentialFilePath(normalizedBaseUrl), out var saved) ||
                 string.IsNullOrWhiteSpace(saved.Email) ||
                 string.IsNullOrWhiteSpace(saved.Password) ||
-                !string.Equals(saved.BaseUrl, baseUrl, StringComparison.OrdinalIgnoreCase))
+                !string.Equals(NormalizeBaseUrl(saved.BaseUrl), normalizedBaseUrl, StringComparison.OrdinalIgnoreCase))
             {
                 return false;
             }
@@ -75,7 +76,7 @@ namespace ost_uploader
 
             try
             {
-                return SaveCredential(new SavedCredential { Auth = resp, BaseUrl = baseUrl });
+                return SaveCredential(new SavedCredential { Auth = resp, BaseUrl = NormalizeBaseUrl(baseUrl) });
             }
             catch
             {
@@ -93,13 +94,14 @@ namespace ost_uploader
 
             try
             {
+                var normalizedBaseUrl = NormalizeBaseUrl(baseUrl);
                 return SaveCredential(new SavedCredential
                 {
                     Auth = resp,
-                    BaseUrl = baseUrl,
+                    BaseUrl = normalizedBaseUrl,
                     Email = email,
                     Password = new NetworkCredential(string.Empty, password).Password
-                }, GetCredentialFilePath(baseUrl));
+                }, GetCredentialFilePath(normalizedBaseUrl));
             }
             catch
             {
@@ -107,12 +109,21 @@ namespace ost_uploader
             }
         }
 
+        private static string NormalizeBaseUrl(string baseUrl)
+        {
+            if (string.IsNullOrWhiteSpace(baseUrl) || !Uri.TryCreate(baseUrl, UriKind.Absolute, out var uri))
+                return baseUrl;
+
+            var authority = uri.IsDefaultPort ? uri.Authority.Replace(":80", string.Empty).Replace(":443", string.Empty) : uri.Authority;
+            return $"{uri.Scheme}://{authority}";
+        }
+
         private string GetCredentialFilePath(string baseUrl)
         {
             var directory = Path.GetDirectoryName(_filePath) ?? string.Empty;
             var name = Path.GetFileNameWithoutExtension(_filePath);
             var extension = Path.GetExtension(_filePath);
-            var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(baseUrl.ToLowerInvariant())))[..16];
+            var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(NormalizeBaseUrl(baseUrl).ToLowerInvariant())))[..16];
             return Path.Combine(directory, $"{name}-{hash}{extension}");
         }
 
