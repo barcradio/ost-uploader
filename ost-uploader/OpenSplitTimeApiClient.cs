@@ -48,7 +48,7 @@ namespace ost_uploader
                 if (!response.IsSuccessStatusCode)
                 {
                     var status = (int)response.StatusCode;
-                    var details = string.IsNullOrWhiteSpace(responseText) ? "No response body returned." : responseText;
+                    var details = string.IsNullOrWhiteSpace(responseText) ? UiStrings.Api_NoResponseBody : responseText;
                     throw new HttpRequestException($"HTTP {status}: {details}", null, response.StatusCode);
                 }
 
@@ -57,14 +57,14 @@ namespace ost_uploader
             catch (HttpRequestException ex)
             {
                 if (ex.StatusCode.HasValue)
-                    MessageBox.Show($"HTTP Error {(int)ex.StatusCode.Value}: {ex.Message}");
+                    MessageBox.Show(UiStrings.Format(UiStrings.Api_HttpError, (int)ex.StatusCode.Value, ex.Message));
                 else
-                    MessageBox.Show($"Request error: {ex.Message}");
+                    MessageBox.Show(UiStrings.Format(UiStrings.Api_RequestError, ex.Message));
                 throw;
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Unexpected error: {ex.Message}");
+                MessageBox.Show(UiStrings.Format(UiStrings.Api_UnexpectedError, ex.Message));
                 throw;
             }
         }
@@ -85,13 +85,13 @@ namespace ost_uploader
             catch (HttpRequestException ex)
             {
                 // Handle HTTP request errors
-                MessageBox.Show($"Request error: {ex.Message}");
+                MessageBox.Show(UiStrings.Format(UiStrings.Api_RequestError, ex.Message));
                 throw;
             }
             catch (Exception ex)
             {
                 // Handle other potential errors
-                MessageBox.Show($"Unexpected error: {ex.Message}");
+                MessageBox.Show(UiStrings.Format(UiStrings.Api_UnexpectedError, ex.Message));
                 throw;
             }
         }
@@ -114,13 +114,13 @@ namespace ost_uploader
             catch (HttpRequestException ex)
             {
                 // Handle HTTP request errors
-                MessageBox.Show($"Request error: {ex.Message}");
+                MessageBox.Show(UiStrings.Format(UiStrings.Api_RequestError, ex.Message));
                 throw;
             }
             catch (Exception ex)
             {
                 // Handle other potential errors
-                MessageBox.Show($"Unexpected error: {ex.Message}");
+                MessageBox.Show(UiStrings.Format(UiStrings.Api_UnexpectedError, ex.Message));
                 throw;
             }
         }

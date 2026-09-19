@@ -33,7 +33,6 @@ namespace ost_uploader
         const int BEAR1002025_EVENT_ID = 995;
         const int BEAR1002025_EVENT_GROUP = 822;
         private int _targetEventId = BEAR1002025_EVENT_ID;
-        private int _targetEventGroup = BEAR1002025_EVENT_GROUP;
         private string _eventName = string.Empty;
         private string _statusMessage = string.Empty;
 
@@ -46,6 +45,7 @@ namespace ost_uploader
         private SecureCredentialStore _credentialStore;
         private bool _suppressSitePrompt = false;
         private int _lastSiteIndex = -1;
+        private List<SiteEntry> _siteEntries = new();
         private string _loadedFilePath = string.Empty;
         private bool _hasLoadedTimes = false;
         private string? _json = null;
@@ -73,8 +73,8 @@ namespace ost_uploader
             exportType_textBox.IsReadOnly = true;
             csvDataGrid.IsReadOnly = true;
 
-            recordsLoaded_Label.Content = "Records Loaded: 0";
-            _statusBarViewModel.StatusMessage = "Load an event zip file to select an OST environment.";
+            recordsLoaded_Label.Content = UiStrings.Format(UiStrings.Import_RecordsLoaded, 0);
+            _statusBarViewModel.StatusMessage = UiStrings.Event_LoadEventZipStatus;
             _statusBarViewModel.OSTEventName = $"{_targetEventId}";
 
             // Authentication is unavailable until valid OST metadata is loaded from stations.json in an event zip.
@@ -102,8 +102,8 @@ namespace ost_uploader
                 if (_isAuthenticated && _authResponse != null)
                 {
                     var expiration = FormatTokenExpiration(_authResponse.expiration);
-                    authStatus_Label.Content = $"Authenticated (expires: {expiration})";
-                    authStatus_Label.ToolTip = "Token Expiration: " + expiration;
+                    authStatus_Label.Content = UiStrings.Format(UiStrings.Auth_Authenticated, expiration);
+                    authStatus_Label.ToolTip = UiStrings.Format(UiStrings.Auth_TokenExpiration, expiration);
                     authStatus_Label.Visibility = Visibility.Visible;
                     authStatus_Label.Foreground = Brushes.Black;
                     loginButton.IsEnabled = false;
@@ -127,8 +127,8 @@ namespace ost_uploader
                 }
                 else
                 {
-                    authStatus_Label.Content = "Authentication Failed";
-                    authStatus_Label.ToolTip = "Login failed. Please verify OST credentials.";
+                    authStatus_Label.Content = UiStrings.Auth_AuthenticationFailed;
+                    authStatus_Label.ToolTip = UiStrings.Auth_LoginFailedTooltip;
                     authStatus_Label.Visibility = Visibility.Visible;
                     authStatus_Label.Foreground = Brushes.Red;
                     loginButton.IsEnabled = true;
@@ -153,7 +153,7 @@ namespace ost_uploader
             if (_isAuthenticated)
             {
                 await SyncSplitEntryKindsAsync();
-                _statusBarViewModel.StatusMessage = _splitKindSyncStatusMessage ?? "Ready";
+                _statusBarViewModel.StatusMessage = _splitKindSyncStatusMessage ?? UiStrings.Status_Ready;
             }
         }
 
@@ -169,7 +169,7 @@ namespace ost_uploader
 
             if (string.IsNullOrWhiteSpace(_apiBaseUrl))
             {
-                _splitKindSyncStatusMessage = "Ready (OpenSplitTime split-kind sync unavailable: site not selected)";
+                _splitKindSyncStatusMessage = UiStrings.Status_SplitKindSyncUnavailableNoSite;
                 return;
             }
 
@@ -183,7 +183,7 @@ namespace ost_uploader
             catch (Exception ex)
             {
                 _splitKindSyncStatusMessage =
-                    $"Ready (OpenSplitTime split-kind sync unavailable: {ex.Message})";
+                    UiStrings.Format(UiStrings.Status_SplitKindSyncUnavailableError, ex.Message);
             }
         }
 
@@ -213,7 +213,7 @@ namespace ost_uploader
                 foreach (var entry in group.entries)
                 {
                     var splitName = entry?.splitName?.Trim();
-                    if (string.IsNullOrWhiteSpace(splitName) || string.IsNullOrWhiteSpace(entry.subSplitKind))
+                    if (entry == null || string.IsNullOrWhiteSpace(splitName) || string.IsNullOrWhiteSpace(entry.subSplitKind))
                     {
                         continue;
                     }
@@ -261,12 +261,21 @@ namespace ost_uploader
             try
             {
                 if (siteComboBox == null) return "";
-                var item = siteComboBox.SelectedItem as ComboBoxItem;
-                if (item == null) return "";
-                if (item.Tag is SiteEntry site)
+
+                if (siteComboBox.SelectedItem is SiteEntry site)
                     return site.Url;
-                var tag = (item.Tag ?? string.Empty).ToString();
-                return tag;
+
+                var index = siteComboBox.SelectedIndex;
+                if (index >= 0 && index < _siteEntries.Count)
+                    return _siteEntries[index].Url;
+
+                if (siteComboBox.SelectedItem is string selectedTitle)
+                {
+                    var match = _siteEntries.FirstOrDefault(s => string.Equals(s.Title, selectedTitle, StringComparison.OrdinalIgnoreCase));
+                    return match?.Url ?? string.Empty;
+                }
+
+                return string.Empty;
             }
             catch
             {
@@ -322,13 +331,16 @@ namespace ost_uploader
                 bool isProduction = IsProductionUrl(newUrl);
                 if (isProduction)
                 {
-                    var msg = "You are switching to the production OpenSplitTime environment. Any times you submit will post to the live event.";
-                    var result = MessageBox.Show(msg, "Confirm Production", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                    var result = MessageBox.Show(UiStrings.Event_ProductionSwitchMessage, UiStrings.Event_ConfirmProduction, MessageBoxButton.YesNo, MessageBoxImage.Warning);
                     if (result != MessageBoxResult.Yes)
                     {
                         // revert selection
                         _suppressSitePrompt = true;
-                        try { siteComboBox.SelectedIndex = _lastSiteIndex; }
+                        try
+                        {
+                            if (siteComboBox != null)
+                                siteComboBox.SelectedIndex = _lastSiteIndex;
+                        }
                         finally { _suppressSitePrompt = false; }
                         return;
                     }
@@ -344,23 +356,24 @@ namespace ost_uploader
                 RestoreSavedCredentialsForSite(newUrl);
 
                 _statusBarViewModel.OSTEventName = GetSelectedSiteEventName();
-                _statusBarViewModel.StatusMessage = _isAuthenticated ? "Ready" : "Waiting for authentication";
+                _statusBarViewModel.StatusMessage = _isAuthenticated ? UiStrings.Status_Ready : UiStrings.Status_WaitingForAuthentication;
             }
         }
 
         private string GetSelectedSiteEventName()
         {
-            var selected = siteComboBox?.SelectedItem as ComboBoxItem;
-            return selected?.Tag is SiteEntry site
-                ? $"Event: {site.EventSlug}"
-                : _statusBarViewModel.OSTEventName;
+            var index = siteComboBox?.SelectedIndex ?? -1;
+            if (index >= 0 && index < _siteEntries.Count)
+                return $"Event: {_siteEntries[index].EventSlug}";
+
+            return _statusBarViewModel.OSTEventName;
         }
 
         private void RestoreSavedCredentialsForSite(string baseUrl)
         {
             _isAuthenticated = false;
             _authResponse = null;
-            authStatus_Label.Content = "Not Authenticated";
+            authStatus_Label.Content = UiStrings.Auth_NotAuthenticated;
             authStatus_Label.ToolTip = string.Empty;
             authStatus_Label.Visibility = Visibility.Visible;
             authStatus_Label.Foreground = Brushes.Red;
@@ -380,8 +393,8 @@ namespace ost_uploader
             _authResponse = saved;
             _isAuthenticated = true;
             var formattedExpiration = FormatTokenExpiration(saved.expiration);
-            authStatus_Label.Content = $"Authenticated (saved, expires: {formattedExpiration})";
-            authStatus_Label.ToolTip = "Token Expiration: " + formattedExpiration;
+            authStatus_Label.Content = UiStrings.Format(UiStrings.Auth_AuthenticatedSaved, formattedExpiration);
+            authStatus_Label.ToolTip = UiStrings.Format(UiStrings.Auth_TokenExpiration, formattedExpiration);
             authStatus_Label.Foreground = Brushes.Black;
             loginButton.IsEnabled = false;
         }
@@ -398,26 +411,27 @@ namespace ost_uploader
         {
             if (_authResponse == null || string.IsNullOrWhiteSpace(_authResponse.token))
             {
-                MessageBox.Show("Authentication token is missing. Please authenticate first.");
+                MessageBox.Show(UiStrings.Auth_AuthenticationTokenMissing);
                 return;
             }
             try
             {
                 var apiClient = new OpenSplitTimeApiClient(_apiBaseUrl, _authResponse.token);
                 var response = await apiClient.GetAsync($"/api/v1/events/{eventId}");
-                OSTEvent targetEvent = JsonSerializer.Deserialize<OSTEvent>(response);
-                _statusBarViewModel.OSTEventName = targetEvent.data.attributes.name;
+                var targetEvent = JsonSerializer.Deserialize<OSTEvent>(response);
+                if (targetEvent?.data?.attributes?.name is string eventName)
+                    _statusBarViewModel.OSTEventName = eventName;
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error retrieving event info: {ex.Message}");
+                MessageBox.Show(UiStrings.Format(UiStrings.Event_ErrorRetrievingEvent, ex.Message));
             }
         }
 
         // Load times from CSV and format JSON for OST. Returns false on failure.
         private bool LoadTimes(string filePath, out string json)
         {
-            json = null;
+            json = string.Empty;
             var importer = new TimesImporter();
             var (header, entries) = importer.Import(filePath);
             var station = string.Empty;
@@ -440,7 +454,7 @@ namespace ost_uploader
                     if (found != null)
                     {
                         LoadEventFileFromPath(found);
-                        _statusBarViewModel.StatusMessage = "Event file auto-detected and loaded.";
+                        _statusBarViewModel.StatusMessage = UiStrings.Event_EventFileLoaded;
                     }
                 }
                 catch
@@ -451,13 +465,13 @@ namespace ost_uploader
 
             if (header == null)
             {
-                MessageBox.Show("Failed to read header from CSV.");
+                MessageBox.Show(UiStrings.Import_FailedReadCsvHeader);
                 return false;
             }
 
             if (header.Fields.Count != 3)
             {
-                MessageBox.Show("CSV header does not contain expected fields. \nEnsure file is an UltraTracker export file.");
+                MessageBox.Show(UiStrings.Import_InvalidCsvHeader);
                 return false;
             }
             else
@@ -468,7 +482,7 @@ namespace ost_uploader
 
                 if (exportType != "full-export" && exportType != "incremental-export")
                 {
-                    MessageBox.Show("CSV file is not an UltraTracker export file.");
+                    MessageBox.Show(UiStrings.Import_InvalidCsvFile);
                     return false;
                 }
             }
@@ -476,7 +490,7 @@ namespace ost_uploader
             var fileName = Path.GetFileNameWithoutExtension(filePath);
 
             // Map station token to OST split name.
-            string mappedSplit;
+            string? mappedSplit;
             if (!_stationNameMap.StationSplitMap.TryGetValue(station, out mappedSplit))
             {
                 var key = _stationNameMap.StationSplitMap.Keys.FirstOrDefault(k => string.Equals(k, station, StringComparison.OrdinalIgnoreCase));
@@ -487,21 +501,21 @@ namespace ost_uploader
                 else
                 {
                     // With event-file-driven uploads, missing station mapping is invalid and will be rejected by OST.
-                    MessageBox.Show($"Station '{station}' was not found in event metadata splitNames. Please verify the event zip and CSV station identifier.");
+                    MessageBox.Show(UiStrings.Format(UiStrings.Import_StationNotFound, station));
                     return false;
                 }
             }
 
-            // API schema validation: bib numbers may include only digits or "*" (duplicate-bib rows are exempt; they're skipped on upload instead).
-            var invalidBib = entries.FirstOrDefault(e => !e.IsDuplicate && (string.IsNullOrWhiteSpace(e.BibId) || e.BibId.Any(c => !(char.IsDigit(c) || c == '*'))));
+            // API schema validation: bib numbers may include only digits or "*" (rows excluded from upload are exempt).
+            var invalidBib = entries.FirstOrDefault(e => e.WillUpload && (string.IsNullOrWhiteSpace(e.BibId) || e.BibId.Any(c => !(char.IsDigit(c) || c == '*'))));
             if (invalidBib != null)
             {
-                MessageBox.Show($"Invalid bib number '{invalidBib.BibId}'. The API allows only digits 0-9 or '*'.");
+                MessageBox.Show(UiStrings.Format(UiStrings.Import_InvalidBib, invalidBib.BibId));
                 return false;
             }
 
             var allowedKinds = ResolveAllowedKindsForSplit(mappedSplit);
-            var formatter = new TimesJsonFormatter(AppName + "_" + fileName, mappedSplit, allowedKinds);
+            var formatter = new TimesJsonFormatter(AppName + "_" + fileName, mappedSplit!, allowedKinds);
             json = formatter.Format(entries);
 
             OnTimesLoaded(EventArgs.Empty, entries, header);
@@ -511,13 +525,48 @@ namespace ost_uploader
 
         private void csvDataGrid_AutoGeneratingColumn(object sender, DataGridAutoGeneratingColumnEventArgs e)
         {
-            if (e.PropertyName == nameof(TimeEntry.IsDuplicate))
+            if (e.PropertyName == nameof(TimeEntry.IsDuplicate) ||
+                e.PropertyName == nameof(TimeEntry.IsDidNotStart) ||
+                e.PropertyName == nameof(TimeEntry.IsDidNotStartAtOtherStation) ||
+                e.PropertyName == nameof(TimeEntry.NeedsAttention) ||
+                e.PropertyName == nameof(TimeEntry.WillUpload))
             {
                 e.Cancel = true;
             }
-            else if (e.PropertyName == nameof(TimeEntry.DuplicateNote))
+            else if (e.PropertyName == nameof(TimeEntry.ReadyStatus))
             {
-                e.Column.Header = "Status";
+                e.Column.Header = UiStrings.Upload_ReadyColumn;
+                e.Column.Width = new DataGridLength(52);
+            }
+            else if (e.PropertyName == nameof(TimeEntry.VerificationNote))
+            {
+                e.Column.Header = UiStrings.Verification_Column;
+                e.Column.MinWidth = 180;
+                e.Column.Width = new DataGridLength(4, DataGridLengthUnitType.Star);
+            }
+            else
+            {
+                e.Column.Width = e.PropertyName switch
+                {
+                    nameof(TimeEntry.Index) => new DataGridLength(48),
+                    nameof(TimeEntry.Sent) => new DataGridLength(48),
+                    nameof(TimeEntry.BibId) => new DataGridLength(55),
+                    nameof(TimeEntry.TimeIn) => new DataGridLength(130),
+                    nameof(TimeEntry.TimeOut) => new DataGridLength(130),
+                    nameof(TimeEntry.DropType) => new DataGridLength(95),
+                    nameof(TimeEntry.DropStation) => new DataGridLength(1.25, DataGridLengthUnitType.Star),
+                    nameof(TimeEntry.Note) => new DataGridLength(1.75, DataGridLengthUnitType.Star),
+                    _ => e.Column.Width
+                };
+
+                if (e.PropertyName == nameof(TimeEntry.DropStation))
+                {
+                    e.Column.MinWidth = 100;
+                }
+                else if (e.PropertyName == nameof(TimeEntry.Note))
+                {
+                    e.Column.MinWidth = 120;
+                }
             }
         }
 
@@ -532,8 +581,8 @@ namespace ost_uploader
 
             var duplicateCount = entries.Count(e => e.IsDuplicate);
             recordsLoaded_Label.Content = duplicateCount > 0
-                ? $"Records Loaded: {entries.Count} ({duplicateCount} duplicate, will not upload)"
-                : $"Records Loaded: {entries.Count}";
+                ? UiStrings.Format(UiStrings.Import_RecordsLoadedWithDuplicates, entries.Count, duplicateCount)
+                : UiStrings.Format(UiStrings.Import_RecordsLoaded, entries.Count);
         }
 
         private void browse_Button_Click(object sender, RoutedEventArgs e)
@@ -542,7 +591,8 @@ namespace ost_uploader
             {
                 Filter = "CSV files (*.csv)|*.csv",
                 Title = "Select a CSV file",
-                Multiselect = false
+                Multiselect = false,
+                InitialDirectory = GetUltraTrackerDirectory()
             };
 
             bool? result = openFileDialog.ShowDialog();
@@ -557,7 +607,7 @@ namespace ost_uploader
                 _hasLoadedTimes = true;
 
                 fileName_textBox.Text = _loadedFilePath;
-                _statusBarViewModel.StatusMessage = $"Ready for Upload: {Path.GetFileName(_loadedFilePath)}";
+                _statusBarViewModel.StatusMessage = UiStrings.Format(UiStrings.Import_ReadyForUpload, Path.GetFileName(_loadedFilePath));
             }
         }
 
@@ -567,18 +617,9 @@ namespace ost_uploader
             {
                 Filter = "Event files (*.zip)|*.zip", 
                 Title = "Select an event file",
-                Multiselect = false
+                Multiselect = false,
+                InitialDirectory = GetUltraTrackerDirectory()
             };
-
-            // Suggest common event config directory in Documents
-            var docDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Ultra-Tracker", ".event-config");
-            if (Directory.Exists(docDir))
-                openFileDialog.InitialDirectory = docDir;
-            else
-            {
-                var downloads = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
-                if (Directory.Exists(downloads)) openFileDialog.InitialDirectory = downloads;
-            }
 
             bool? result = openFileDialog.ShowDialog();
             if (result == true)
@@ -587,12 +628,19 @@ namespace ost_uploader
             }
         }
 
+        private static string GetUltraTrackerDirectory()
+        {
+            var documents = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            var ultraTrackerDirectory = Path.Combine(documents, "Ultra-Tracker");
+            return Directory.Exists(ultraTrackerDirectory) ? ultraTrackerDirectory : documents;
+        }
+
         private void LoadEventFileFromPath(string path, bool showErrors = true)
         {
             if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
             {
                 if (showErrors)
-                    MessageBox.Show("Event file not found.");
+                    MessageBox.Show(UiStrings.Event_EventFileNotFound);
                 return;
             }
 
@@ -608,6 +656,7 @@ namespace ost_uploader
                 try
                 {
                     _suppressSitePrompt = true;
+                    siteComboBox.ItemsSource = null;
                     siteComboBox.Items.Clear();
 
                     // Only enumerate connection options from openSplitTime.production and openSplitTime.staging metadata.
@@ -615,22 +664,18 @@ namespace ost_uploader
                         .Where(s => string.Equals(s.Title, "Production", StringComparison.OrdinalIgnoreCase) || string.Equals(s.Title, "Staging", StringComparison.OrdinalIgnoreCase))
                         .ToList();
 
+                    _siteEntries = sites;
+
                     if (sites.Count > 0)
                     {
-                        foreach (var s in sites)
-                        {
-                            var item = new ComboBoxItem { Content = s.Title, Tag = s };
-                            siteComboBox.Items.Add(item);
-                        }
-
+                        siteComboBox.ItemsSource = sites.Select(s => s.Title).ToList();
                         siteComboBox.IsEnabled = true;
 
                         // Default selection: prefer staging if present
                         int preferred = -1;
-                        for (int i = 0; i < siteComboBox.Items.Count; i++)
+                        for (int i = 0; i < sites.Count; i++)
                         {
-                            var itm = siteComboBox.Items[i] as ComboBoxItem;
-                            var tag = itm?.Tag is SiteEntry site ? site.Url : (itm?.Tag ?? string.Empty).ToString();
+                            var tag = sites[i].Url;
                             if (!string.IsNullOrWhiteSpace(tag) && tag.Contains("staging", StringComparison.OrdinalIgnoreCase))
                             {
                                 preferred = i; break;
@@ -655,7 +700,9 @@ namespace ost_uploader
                     {
                         // No OST metadata present in event file
                         siteComboBox.IsEnabled = false;
+                        siteComboBox.ItemsSource = null;
                         siteComboBox.Items.Clear();
+                        _siteEntries.Clear();
                         _apiBaseUrl = string.Empty;
 
                         // disable authentication controls
@@ -664,7 +711,7 @@ namespace ost_uploader
                         password_TextBox.IsEnabled = false;
                         saveToken_CheckBox.IsEnabled = false;
 
-                        _statusBarViewModel.StatusMessage = "Event file missing OST metadata — cannot authenticate.";
+                        _statusBarViewModel.StatusMessage = UiStrings.Event_MissingOstMetadata;
                         return;
                     }
                 }
@@ -673,13 +720,13 @@ namespace ost_uploader
                     _suppressSitePrompt = false;
                 }
 
-                _statusBarViewModel.StatusMessage = "Event file loaded.";
+                _statusBarViewModel.StatusMessage = UiStrings.Event_EventFileLoaded;
             }
             else
             {
                 if (showErrors)
-                    MessageBox.Show("Failed to load event file. The file may be malformed.");
-                _statusBarViewModel.StatusMessage = "Event file load failed.";
+                    MessageBox.Show(UiStrings.Event_FailedLoadEvent);
+                _statusBarViewModel.StatusMessage = UiStrings.Event_EventFileLoadFailed;
             }
         }
 
@@ -689,13 +736,13 @@ namespace ost_uploader
             {
                 if (_authResponse == null || string.IsNullOrWhiteSpace(_authResponse.token))
                 {
-                    MessageBox.Show("Authentication token is missing. Please authenticate first.");
+                    MessageBox.Show(UiStrings.Auth_AuthenticationTokenMissing);
                     return;
                 }
 
                 if (string.IsNullOrWhiteSpace(_json))
                 {
-                    MessageBox.Show("JSON data is missing. Please load times from a CSV file first.");
+                    MessageBox.Show(UiStrings.Import_JsonDataMissing);
                     return;
                 }
 
@@ -716,15 +763,15 @@ namespace ost_uploader
                 var response = await apiClient.PostJsonAsync("/import", _json);
 
                 string fileName = Path.GetFileName(_loadedFilePath);
-                _statusBarViewModel.StatusMessage = $"Upload completed: {fileName}";
+                _statusBarViewModel.StatusMessage = UiStrings.Format(UiStrings.Upload_Completed, fileName);
 
                 if (response != "{}")  //expect a quiet response when importing raw times
-                    MessageBox.Show($"API Response: {response}");
+                    MessageBox.Show(UiStrings.Format(UiStrings.Upload_ApiResponse, response));
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Upload failed: {ex.Message}");
-                _statusBarViewModel.StatusMessage = "Upload failed.";
+                MessageBox.Show(UiStrings.Format(UiStrings.Upload_FailedDetails, ex.Message));
+                _statusBarViewModel.StatusMessage = UiStrings.Upload_Failed;
                 return;
             }
         }
@@ -733,13 +780,13 @@ namespace ost_uploader
         {
             if (!_isAuthenticated)
             {
-                MessageBox.Show("Please authenticate before uploading.");
+                MessageBox.Show(UiStrings.Auth_PleaseAuthenticate);
                 return;
             }
 
             if (!_hasLoadedTimes || string.IsNullOrWhiteSpace(_json))
             {
-                MessageBox.Show("Please load times from a CSV file before uploading.");
+                MessageBox.Show(UiStrings.Import_PleaseLoadTimes);
                 return;
             }
 

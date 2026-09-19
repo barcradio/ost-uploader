@@ -10,8 +10,8 @@ namespace ost_uploader.ViewModels
 {
     public class StatusBarViewModel : INotifyPropertyChanged
     {
-        private string _ostEventName;
-        private string _statusMessage;
+        private string _ostEventName = string.Empty;
+        private string _statusMessage = string.Empty;
 
         public string OSTEventName
         {
@@ -39,7 +39,7 @@ namespace ost_uploader.ViewModels
             }
         }
 
-        public event PropertyChangedEventHandler PropertyChanged;
+        public event PropertyChangedEventHandler? PropertyChanged;
 
         protected void OnPropertyChanged(string propertyName) =>
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));

@@ -9,17 +9,17 @@ namespace ost_uploader
 {
     public class TimesImporter
     {
-        public (CsvHeader Header, List<TimeEntry>) Import(string csvPath)
+        public (CsvHeader? Header, List<TimeEntry>) Import(string csvPath)
         {
             var entries = new List<TimeEntry>();
-            CsvHeader header = null;
+            CsvHeader? header = null;
             using var reader = new StreamReader(csvPath);
             int lineNum = 0;
 
             // Skip metadata/header lines
             while (!reader.EndOfStream)
             {
-                var line = reader.ReadLine();
+                var line = reader.ReadLine() ?? string.Empty;
                 lineNum++;
 
                 if (lineNum == 1)
@@ -83,22 +83,32 @@ namespace ost_uploader
     {
         // Duplicate bib entries (e.g. "101.2") are re-sends for an already-recorded bib and must be skipped on upload.
         private static readonly Regex DuplicateBibPattern = new(@"^\d+\.2$", RegexOptions.Compiled);
+        private const string StartLineStation = "0-start-line";
 
         public int Index { get; set; }
         public int Sent { get; set; }
         public required string BibId { get; set; }
         public DateTime? TimeIn { get; set; }
         public DateTime? TimeOut { get; set; }
-        public string DropType { get; set; }
-        public string DropStation { get; set; }
-        public string Note { get; set; }
+        public string? DropType { get; set; }
+        public string? DropStation { get; set; }
+        public string? Note { get; set; }
 
         public bool IsDuplicate => IsDuplicateBib(BibId);
-        public string? DuplicateNote => IsDuplicate ? $"Duplicate bib — will not be uploaded to OST. Notify station." : null;
+        public string? VerificationNote => IsDuplicate
+            ? UiStrings.Verification_DuplicateBib
+            : IsDidNotStartAtOtherStation
+                ? UiStrings.Format(UiStrings.Verification_DidNotStartAtStation, DropStation!.Trim())
+                : IsDidNotStart ? UiStrings.Verification_DidNotStart : null;
 
-        public static bool IsDuplicateBib(string bibId) =>
+        public static bool IsDuplicateBib(string? bibId) =>
             !string.IsNullOrWhiteSpace(bibId) && DuplicateBibPattern.IsMatch(bibId);
         public bool IsDidNotStart => string.Equals(DropType?.Trim(), "did-not-start", StringComparison.OrdinalIgnoreCase);
-        public string? DidNotStartNote => IsDidNotStart ? "Did not start - will not be uploaded to OST." : null;
+        public bool IsDidNotStartAtOtherStation =>
+            IsDidNotStart && !string.IsNullOrWhiteSpace(DropStation) &&
+            !string.Equals(DropStation.Trim(), StartLineStation, StringComparison.OrdinalIgnoreCase);
+        public bool WillUpload => !IsDuplicate && !IsDidNotStart;
+        public string ReadyStatus => WillUpload ? UiStrings.Upload_ReadyYes : UiStrings.Upload_ReadyNo;
+        public bool NeedsAttention => IsDuplicate || IsDidNotStart;
     }
 }
