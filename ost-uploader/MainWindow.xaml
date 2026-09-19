@@ -1,11 +1,11 @@
-﻿<Window x:Class="ost_uploader.MainWindow"
+﻿    <Window x:Class="ost_uploader.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ost_uploader"
         mc:Ignorable="d"
-        Title="OST-Uploader" Width="1100" Height="640" MinWidth="1000" MinHeight="580" ResizeMode="CanMinimize">
+             Title="{x:Static local:UiStrings.App_ApplicationTitle}" Width="1100" Height="640" MinWidth="1000" MinHeight="580" ResizeMode="CanMinimize">
     <Window.Resources>
         <Style x:Key="StandardButton" TargetType="Button">
             <Setter Property="Background" Value="#FF007ACC"/>
@@ -48,9 +48,9 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <Label Grid.Column="0" Content="Event File:" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0,4,8,4"/>
+                <Label Grid.Column="0" Content="{x:Static local:UiStrings.Event_EventFileLabel}" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0,4,8,4"/>
                 <TextBox Grid.Column="1" Name="eventFile_textBox" Style="{StaticResource SingleLineValueTextBox}" Text="" Margin="0,4,8,4" IsReadOnly="True" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
-                <Button Grid.Column="2" Name="browseEvent_Button" Style="{StaticResource StandardButton}" Content="Browse Event File" HorizontalAlignment="Left" VerticalAlignment="Center" Click="browseEvent_Button_Click"/>
+                <Button Grid.Column="2" Name="browseEvent_Button" Style="{StaticResource StandardButton}" Content="{x:Static local:UiStrings.Event_BrowseEventFile}" HorizontalAlignment="Left" VerticalAlignment="Center" Click="browseEvent_Button_Click"/>
             </Grid>
 
             <Grid Grid.Row="1">
@@ -64,18 +64,16 @@
                     <ColumnDefinition Width="*" MinWidth="160"/>
                 </Grid.ColumnDefinitions>
 
-                <Label Grid.Column="0" Content="Email:" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0,4,8,4"/>
+                <Label Grid.Column="0" Content="{x:Static local:UiStrings.Auth_Email}" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0,4,8,4"/>
                 <TextBox Grid.Column="1" x:Name="userEmail_TextBox" Style="{StaticResource SingleLineValueTextBox}" Margin="0,4,8,4" TextChanged="userEmail_TextBox_TextChanged"/>
-                <Label Grid.Column="2" Content="Password:" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,4,0,4" />
+                <Label Grid.Column="2" Content="{x:Static local:UiStrings.Auth_Password}" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,4,0,4" />
                 <PasswordBox Grid.Column="3" x:Name="password_TextBox" HorizontalAlignment="Stretch" VerticalAlignment="Center" Margin="8,4,8,4" MinHeight="22" PasswordChanged="password_TextBox_PasswordChanged"/>
-                <Button Grid.Column="4" x:Name="loginButton" Content="Login"
+                <Button Grid.Column="4" x:Name="loginButton" Content="{x:Static local:UiStrings.Auth_Login}"
                         Style="{StaticResource StandardButton}"
-                        Command="{Binding LoginCommand}"
-                        CommandParameter="{Binding ElementName=passwordBox}"
                         HorizontalAlignment="Left" VerticalAlignment="Center"
                         Click="authLogin_Click" />
-                <CheckBox Grid.Column="5" x:Name="saveToken_CheckBox" Content="Save credentials" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="8,4,0,4" ToolTip="Securely save the authentication token for future sessions" />
-                <Label Grid.Column="6" Name="authStatus_Label" Content="Not Authenticated" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="10,4,0,4" ToolTip=""/>
+                <CheckBox Grid.Column="5" x:Name="saveToken_CheckBox" Content="{x:Static local:UiStrings.Auth_SaveCredentials}" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="8,4,0,4" ToolTip="{x:Static local:UiStrings.Auth_SaveCredentialsTooltip}" />
+                <Label Grid.Column="6" Name="authStatus_Label" Content="{x:Static local:UiStrings.Auth_NotAuthenticated}" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="10,4,0,4" ToolTip=""/>
             </Grid>
 
             <Grid Grid.Row="2">
@@ -86,10 +84,10 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <Label Grid.Column="0" Content="Select CSV File:" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0,4,8,4"/>
+                <Label Grid.Column="0" Content="{x:Static local:UiStrings.Import_SelectCsvFile}" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0,4,8,4"/>
                 <TextBox Grid.Column="1" Name="fileName_textBox" Style="{StaticResource SingleLineValueTextBox}" Text="" Margin="0,4,8,4" IsReadOnly="True" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
-                <Button Grid.Column="2" Name="browse_Button" Style="{StaticResource StandardButton}" Content="Load File" HorizontalAlignment="Left" VerticalAlignment="Center" Click="browse_Button_Click"/>
-                <Button Grid.Column="3" Name="upload_Button" Style="{StaticResource StandardButton}" Content="Upload Data" HorizontalAlignment="Left" VerticalAlignment="Center" Click="upload_Button_Click"/>
+                <Button Grid.Column="2" Name="browse_Button" Style="{StaticResource StandardButton}" Content="{x:Static local:UiStrings.Import_LoadFile}" HorizontalAlignment="Left" VerticalAlignment="Center" Click="browse_Button_Click"/>
+                <Button Grid.Column="3" Name="upload_Button" Style="{StaticResource StandardButton}" Content="{x:Static local:UiStrings.Upload_Data}" HorizontalAlignment="Left" VerticalAlignment="Center" Click="upload_Button_Click"/>
             </Grid>
         </Grid>
         <Rectangle Grid.Row="1" Fill="#FF007ACC" Height="2" Margin="0,8"/>
@@ -108,14 +106,14 @@
             <TextBox Grid.Column="0" Name="event_textBox" Style="{StaticResource SingleLineValueTextBox}" Text="" Margin="0,0,8,0" IsReadOnly="True" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
             <TextBox Grid.Column="1" Name="station_textBox" Style="{StaticResource SingleLineValueTextBox}" Text="" Margin="0,0,8,0" IsReadOnly="True" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
             <TextBox Grid.Column="2" Name="exportType_textBox" Style="{StaticResource SingleLineValueTextBox}" Text="" Margin="0,0,8,0" IsReadOnly="True" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
-            <Label Grid.Column="3" Name="recordsLoaded_Label" Content="Records Loaded: 0" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0"/>
+            <Label Grid.Column="3" Name="recordsLoaded_Label" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0"/>
         </Grid>
 
         <DataGrid x:Name="csvDataGrid" Grid.Row="3" d:ItemsSource="{d:SampleData ItemCount=5}" MinHeight="320" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" AutoGeneratingColumn="csvDataGrid_AutoGeneratingColumn" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" CanUserResizeColumns="True">
             <DataGrid.RowStyle>
                 <Style TargetType="DataGridRow">
                     <Style.Triggers>
-                        <DataTrigger Binding="{Binding IsDuplicate}" Value="True">
+                        <DataTrigger Binding="{Binding NeedsAttention}" Value="True">
                             <Setter Property="Background" Value="#FFF7E29B"/>
                         </DataTrigger>
                     </Style.Triggers>
@@ -135,12 +133,9 @@
                         <ColumnDefinition Width="*" MinWidth="260"/>
                     </Grid.ColumnDefinitions>
 
-                    <Label Grid.Column="0" Content="OST Site:" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0,0,8,0" />
-                    <ComboBox Grid.Column="1" x:Name="siteComboBox" MinWidth="110" SelectedIndex="0" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0,0,12,0" SelectionChanged="siteComboBox_SelectionChanged" IsEnabled="False">
-                        <ComboBoxItem>Production</ComboBoxItem>
-                        <ComboBoxItem>Staging</ComboBoxItem>
-                    </ComboBox>
-                    <Label Grid.Column="2" x:Name="event_Label" Content="OST Event" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <Label Grid.Column="0" Content="{x:Static local:UiStrings.Ost_Site}" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0,0,8,0" />
+                    <ComboBox Grid.Column="1" x:Name="siteComboBox" MinWidth="110" SelectedIndex="0" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0,0,12,0" SelectionChanged="siteComboBox_SelectionChanged" IsEnabled="False"/>
+                    <Label Grid.Column="2" x:Name="event_Label" Content="{x:Static local:UiStrings.Ost_Event}" VerticalAlignment="Center" Margin="0,0,8,0"/>
                     <TextBox Grid.Column="3" x:Name="ostEvent_TextBox" Style="{StaticResource SingleLineValueTextBox}" Text="{Binding OSTEventName, UpdateSourceTrigger=PropertyChanged}" MinWidth="180" Margin="0,0,12,0" IsReadOnly="True" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                     <Separator Grid.Column="4" Height="30" HorizontalAlignment="Left" VerticalAlignment="Center" Width="1" Margin="0,0,12,0"/>
                     <TextBox Grid.Column="5" x:Name="status_TextBox" Style="{StaticResource SingleLineValueTextBox}" Text="{Binding StatusMessage, UpdateSourceTrigger=PropertyChanged}" IsReadOnly="True" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>

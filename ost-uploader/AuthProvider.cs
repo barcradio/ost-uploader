@@ -62,18 +62,18 @@ namespace ost_uploader
             catch (HttpRequestException ex)
             {
                 if (ex.StatusCode.HasValue)
-                    MessageBox.Show($"HTTP Error {(int)ex.StatusCode.Value}: {ex.Message}");
+                    MessageBox.Show(UiStrings.Format(UiStrings.Api_HttpError, (int)ex.StatusCode.Value, ex.Message));
                 else
                 {
                     // Handle HTTP request errors
-                    MessageBox.Show($"Request error: {ex.Message}");
+                    MessageBox.Show(UiStrings.Format(UiStrings.Api_RequestError, ex.Message));
                 }
                 return new APIAuthResponse();
             }
             catch (Exception ex)
             {
                 // Handle other potential errors
-                MessageBox.Show($"Unexpected error: {ex.Message}");
+                MessageBox.Show(UiStrings.Format(UiStrings.Api_UnexpectedError, ex.Message));
                 return new APIAuthResponse();
             }
         }

@@ -30,7 +30,7 @@ namespace ost_uploader
 
         public bool TryGetValidToken(out APIAuthResponse auth, out string baseUrl)
         {
-            auth = null;
+            auth = null!;
             baseUrl = string.Empty;
             if (!TryReadSavedCredential(out var saved))
                 return false;
@@ -151,7 +151,7 @@ namespace ost_uploader
             }
         }
 
-        private bool SaveCredential(SavedCredential saved, string filePath = null)
+        private bool SaveCredential(SavedCredential saved, string? filePath = null)
         {
             var json = JsonSerializer.Serialize(saved);
             var bytes = Encoding.UTF8.GetBytes(json);

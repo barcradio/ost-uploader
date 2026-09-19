@@ -31,8 +31,7 @@ namespace ost_uploader
 
             foreach (var entry in entries)
             {
-                if (entry.IsDuplicate) continue; // duplicate bib rows are shown in the grid but never uploaded
-                if (entry.IsDidNotStart) continue; // DNS rows stay visible in the grid but are never uploaded
+                if (!entry.WillUpload) continue; // excluded rows stay visible in the grid but are never uploaded
 
                 isDrop = (entry.DropType == "withdrew" || entry.DropType == "medical" || entry.DropType == "timeout");
 
@@ -98,46 +97,46 @@ namespace ost_uploader
         private class JsonApiRoot
         {
             [JsonPropertyName("data")]
-            public List<JsonApiRawTime> Data { get; set; }
+            public List<JsonApiRawTime> Data { get; set; } = new();
 
             [JsonPropertyName("data_format")]
-            public string DataFormat { get; set; }
+            public string DataFormat { get; set; } = null!;
 
             [JsonPropertyName("limited_response")]
-            public string LimitedResponse { get; set; }
+            public string LimitedResponse { get; set; } = null!;
         }
 
         private class JsonApiRawTime
         {
             [JsonPropertyName("type")]
-            public string Type { get; set; }
+            public string Type { get; set; } = null!;
 
             [JsonPropertyName("attributes")]
-            public JsonApiRawTimeAttributes Attributes { get; set; }
+            public JsonApiRawTimeAttributes Attributes { get; set; } = null!;
         }
 
         private class JsonApiRawTimeAttributes
         {
             [JsonPropertyName("source")]
-            public string Source { get; set; }
+            public string Source { get; set; } = null!;
 
             [JsonPropertyName("sub_split_kind")]
-            public string SubSplitKind { get; set; }
+            public string SubSplitKind { get; set; } = null!;
 
             [JsonPropertyName("with_pacer")]
-            public string WithPacer { get; set; }
+            public string WithPacer { get; set; } = null!;
 
             [JsonPropertyName("entered_time")]
-            public string EnteredTime { get; set; }
+            public string EnteredTime { get; set; } = null!;
 
             [JsonPropertyName("split_name")]
-            public string SplitName { get; set; }
+            public string SplitName { get; set; } = null!;
 
             [JsonPropertyName("bib_number")]
-            public string BibNumber { get; set; }
+            public string BibNumber { get; set; } = null!;
 
             [JsonPropertyName("stopped_here")]
-            public string StoppedHere { get; set; }
+            public string StoppedHere { get; set; } = null!;
         }
     }
 }

@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="App_ApplicationTitle" xml:space="preserve"><value>OST-Uploader</value></data>
+  <data name="Auth_Email" xml:space="preserve"><value>Email:</value></data>
+  <data name="Auth_Password" xml:space="preserve"><value>Password:</value></data>
+  <data name="Auth_Login" xml:space="preserve"><value>Login</value></data>
+  <data name="Auth_SaveCredentials" xml:space="preserve"><value>Save credentials</value></data>
+  <data name="Auth_SaveCredentialsTooltip" xml:space="preserve"><value>Securely save the authentication token for future sessions</value></data>
+  <data name="Auth_NotAuthenticated" xml:space="preserve"><value>Not Authenticated</value></data>
+  <data name="Auth_AuthenticationFailed" xml:space="preserve"><value>Authentication Failed</value></data>
+  <data name="Auth_Authenticated" xml:space="preserve"><value>Authenticated (expires: {0})</value></data>
+  <data name="Auth_AuthenticatedSaved" xml:space="preserve"><value>Authenticated (saved, expires: {0})</value></data>
+  <data name="Auth_TokenExpiration" xml:space="preserve"><value>Token Expiration: {0}</value></data>
+  <data name="Auth_LoginFailedTooltip" xml:space="preserve"><value>Login failed. Please verify OST credentials.</value></data>
+  <data name="Auth_AuthenticationTokenMissing" xml:space="preserve"><value>Authentication token is missing. Please authenticate first.</value></data>
+  <data name="Auth_PleaseAuthenticate" xml:space="preserve"><value>Please authenticate before uploading.</value></data>
+  <data name="Event_EventFileLabel" xml:space="preserve"><value>Event File:</value></data>
+  <data name="Event_BrowseEventFile" xml:space="preserve"><value>Browse Event File</value></data>
+  <data name="Event_LoadEventZipStatus" xml:space="preserve"><value>Load an event zip file to select an OST environment.</value></data>
+  <data name="Event_ProductionSwitchMessage" xml:space="preserve"><value>You are switching to the production OpenSplitTime environment. Any times you submit will post to the live event.</value></data>
+  <data name="Event_ConfirmProduction" xml:space="preserve"><value>Confirm Production</value></data>
+  <data name="Event_ErrorRetrievingEvent" xml:space="preserve"><value>Error retrieving event info: {0}</value></data>
+  <data name="Event_EventFileNotFound" xml:space="preserve"><value>Event file not found.</value></data>
+  <data name="Event_MissingOstMetadata" xml:space="preserve"><value>Event file missing OST metadata - cannot authenticate.</value></data>
+  <data name="Event_EventFileLoaded" xml:space="preserve"><value>Event file loaded.</value></data>
+  <data name="Event_FailedLoadEvent" xml:space="preserve"><value>Failed to load event file. The file may be malformed.</value></data>
+  <data name="Event_EventFileLoadFailed" xml:space="preserve"><value>Event file load failed.</value></data>
+  <data name="Import_SelectCsvFile" xml:space="preserve"><value>Select CSV File:</value></data>
+  <data name="Import_LoadFile" xml:space="preserve"><value>Load File</value></data>
+  <data name="Import_RecordsLoaded" xml:space="preserve"><value>Records Loaded: {0}</value></data>
+  <data name="Import_RecordsLoadedWithDuplicates" xml:space="preserve"><value>Records Loaded: {0} ({1} duplicate, will not upload)</value></data>
+  <data name="Import_FailedReadCsvHeader" xml:space="preserve"><value>Failed to read header from CSV.</value></data>
+  <data name="Import_InvalidCsvHeader" xml:space="preserve"><value>CSV header does not contain expected fields.&#10;Ensure file is an UltraTracker export file.</value></data>
+  <data name="Import_InvalidCsvFile" xml:space="preserve"><value>CSV file is not an UltraTracker export file.</value></data>
+  <data name="Import_StationNotFound" xml:space="preserve"><value>Station '{0}' was not found in event metadata splitNames. Please verify the event zip and CSV station identifier.</value></data>
+  <data name="Import_InvalidBib" xml:space="preserve"><value>Invalid bib number '{0}'. The API allows only digits 0-9 or '*'.</value></data>
+  <data name="Import_ReadyForUpload" xml:space="preserve"><value>Ready for Upload: {0}</value></data>
+  <data name="Import_JsonDataMissing" xml:space="preserve"><value>JSON data is missing. Please load times from a CSV file first.</value></data>
+  <data name="Import_PleaseLoadTimes" xml:space="preserve"><value>Please load times from a CSV file before uploading.</value></data>
+  <data name="Ost_Site" xml:space="preserve"><value>OST Site:</value></data>
+  <data name="Ost_Event" xml:space="preserve"><value>OST Event:</value></data>
+  <data name="Status_Ready" xml:space="preserve"><value>Ready</value></data>
+  <data name="Status_SplitKindSyncUnavailableNoSite" xml:space="preserve"><value>Ready (OpenSplitTime split-kind sync unavailable: site not selected)</value></data>
+  <data name="Status_SplitKindSyncUnavailableError" xml:space="preserve"><value>Ready (OpenSplitTime split-kind sync unavailable: {0})</value></data>
+  <data name="Status_WaitingForAuthentication" xml:space="preserve"><value>Waiting for authentication</value></data>
+  <data name="Upload_Data" xml:space="preserve"><value>Upload Data</value></data>
+  <data name="Upload_ReadyColumn" xml:space="preserve"><value>Ready</value></data>
+  <data name="Upload_ReadyYes" xml:space="preserve"><value>Yes</value></data>
+  <data name="Upload_ReadyNo" xml:space="preserve"><value>No</value></data>
+  <data name="Upload_Completed" xml:space="preserve"><value>Upload completed: {0}</value></data>
+  <data name="Upload_ApiResponse" xml:space="preserve"><value>API Response: {0}</value></data>
+  <data name="Upload_Failed" xml:space="preserve"><value>Upload failed.</value></data>
+  <data name="Upload_FailedDetails" xml:space="preserve"><value>Upload failed: {0}</value></data>
+  <data name="Verification_Column" xml:space="preserve"><value>Verification</value></data>
+  <data name="Verification_DuplicateBib" xml:space="preserve"><value>Duplicate bib. Notify station.</value></data>
+  <data name="Verification_DidNotStart" xml:space="preserve"><value>Did not start. Verify with station.</value></data>
+  <data name="Verification_DidNotStartAtStation" xml:space="preserve"><value>Did not start at station '{0}'. Verify with station.</value></data>
+  <data name="Api_HttpError" xml:space="preserve"><value>HTTP Error {0}: {1}</value></data>
+  <data name="Api_RequestError" xml:space="preserve"><value>Request error: {0}</value></data>
+  <data name="Api_UnexpectedError" xml:space="preserve"><value>Unexpected error: {0}</value></data>
+  <data name="Api_NoResponseBody" xml:space="preserve"><value>No response body returned.</value></data>
+</root>
